@@ -1,0 +1,2354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WeekFlow</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Fraunces:ital,wght@0,300;0,600;0,900;1,300&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0e0f11;--surface:#161719;--surface2:#1e2023;--surface3:#25282c;--border:#2a2c30;--accent:#c8f06e;--accent2:#6ec8f0;--accent3:#f0a06e;--text:#e8e9eb;--muted:#7a7d85;--danger:#f06e6e;--radius:10px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;font-size:13px;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(200,240,110,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(200,240,110,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+.app{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:24px 20px}
+header{display:flex;align-items:center;gap:12px;margin-bottom:28px}
+header h1{font-family:'Fraunces',serif;font-size:32px;font-weight:900;color:var(--accent);letter-spacing:-1px}
+header span{color:var(--muted);font-size:12px}
+#clock{margin-left:auto;font-size:13px;color:var(--accent);font-family:'DM Mono',monospace;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:4px 10px}
+.panels{display:grid;grid-template-columns:320px 1fr;gap:16px;align-items:start}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.panel-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.panel-header .dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+
+/* ── Hamburger button (mobile only) ── */
+#menuBtn{display:none;background:none;border:2px solid var(--accent);border-radius:8px;color:var(--accent);cursor:pointer;padding:8px 11px;flex-shrink:0;line-height:1;font-size:20px;-webkit-tap-highlight-color:transparent;position:relative;z-index:200;touch-action:manipulation}
+header{position:relative;z-index:50}
+
+/* ── Drawer overlay ── */
+#drawerOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:100;backdrop-filter:blur(2px)}
+#drawerOverlay.open{display:block}
+
+/* ── Slide-in drawer ── */
+#drawer{position:fixed;top:0;left:0;bottom:0;width:min(340px,92vw);background:var(--bg);border-right:1px solid var(--border);z-index:101;transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,0,.2,1);overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:40px}
+#drawer.open{transform:translateX(0)}
+#drawerHeader{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:2}
+#drawerTitle{font-family:'Fraunces',serif;font-size:20px;font-weight:900;color:var(--accent);letter-spacing:-.5px}
+#drawerClose{background:none;border:1px solid var(--border);border-radius:7px;color:var(--muted);cursor:pointer;font-size:18px;padding:4px 10px;line-height:1;-webkit-tap-highlight-color:transparent}
+#drawerClose:active{color:var(--text)}
+
+/* Drawer section tabs */
+#drawerTabs{display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface)}
+.drawer-tab{flex:1;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);cursor:pointer;font-family:'DM Mono',monospace;font-size:10px;padding:10px 4px;text-transform:uppercase;letter-spacing:.8px;transition:all .15s;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.drawer-tab.active{border-bottom-color:var(--accent);color:var(--accent)}
+
+/* Drawer panels */
+.drawer-section{display:none;padding:16px 18px}
+.drawer-section.active{display:block}
+.panel-body{padding:18px}
+.setting-row{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.setting-row label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px}
+.setting-row input,.setting-row select{background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;padding:8px 10px;outline:none;transition:border-color .15s;width:100%}
+.setting-row input:focus,.setting-row select:focus{border-color:var(--accent)}
+.setting-row select option{background:var(--surface2)}
+.inline-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.task-input-area{display:flex;flex-direction:column;gap:8px}
+.task-row{display:grid;grid-template-columns:20px 1fr 72px 26px;gap:6px;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 8px}
+.task-row input{background:var(--surface3);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;padding:5px 7px;outline:none;width:100%;transition:border-color .15s}
+.task-row input:focus{border-color:var(--accent2)}
+.task-row input::placeholder{color:var(--muted);opacity:.6}
+.task-complete{width:15px;height:15px;cursor:pointer;accent-color:var(--accent);flex-shrink:0}
+.task-row.completed .task-name-inp,.task-row.completed .task-dur-inp{text-decoration:line-through;opacity:.4;color:var(--muted)}
+.dur-input{color:var(--accent3);text-align:center}
+.remove-btn{background:none;border:1px solid var(--border);border-radius:5px;color:var(--muted);cursor:pointer;font-size:15px;height:26px;width:26px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.remove-btn:hover{border-color:var(--danger);color:var(--danger)}
+.add-task-btn{background:none;border:1px dashed var(--border);border-radius:6px;color:var(--muted);cursor:pointer;font-family:'DM Mono',monospace;font-size:12px;padding:8px;text-align:center;transition:all .15s;width:100%;margin-top:8px}
+.add-task-btn:hover{border-color:var(--accent);color:var(--accent)}
+.dur-hint{font-size:10px;color:var(--muted);text-align:center;margin-top:6px}
+.generate-btn{background:var(--accent);border:none;border-radius:8px;color:#0e0f11;cursor:pointer;font-family:'Fraunces',serif;font-size:15px;font-weight:600;letter-spacing:-.3px;margin-top:14px;padding:12px;transition:all .15s;width:100%}
+.generate-btn:hover{background:#d8ff7e;transform:translateY(-1px)}
+.generate-btn:active{transform:translateY(0)}
+.calendar-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.calendar-title{font-family:'Fraunces',serif;font-size:18px;font-weight:600;color:var(--text)}
+.calendar-meta{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.rollover-badge{background:rgba(240,160,110,.15);border:1px solid rgba(240,160,110,.4);border-radius:4px;color:var(--accent3);font-size:10px;padding:2px 8px;display:none}
+.cal-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.day-columns{display:flex;min-width:max-content}
+.day-col{width:210px;flex-shrink:0;border-right:1px solid var(--border)}
+.day-col:last-child{border-right:none}
+.day-col.today{background:rgba(200,240,110,.025)}
+.day-col.past{opacity:.45}
+.day-col.weekend{background:rgba(255,255,255,.01)}
+.day-header{padding:10px 12px 8px;border-bottom:1px solid var(--border);text-align:center}
+.day-name-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
+.day-date-label{font-size:13px;font-weight:500;margin-top:2px;color:var(--text)}
+.today .day-date-label{color:var(--accent)}
+.today-badge{display:inline-block;background:var(--accent);color:#0e0f11;font-size:9px;font-weight:700;border-radius:3px;padding:1px 5px;margin-left:5px;vertical-align:middle;letter-spacing:.5px}
+.rolled-badge{display:inline-block;background:rgba(240,160,110,.2);color:var(--accent3);font-size:9px;border-radius:3px;padding:1px 5px;margin-left:4px;vertical-align:middle;letter-spacing:.3px;border:1px solid rgba(240,160,110,.3)}
+.day-slots{padding:10px 8px;display:flex;flex-direction:column;gap:4px;min-height:180px}
+.time-block{border-radius:6px;padding:7px 9px;cursor:grab;position:relative;transition:transform .1s,opacity .2s;user-select:none;animation:slideIn .18s ease forwards}
+.time-block:hover{transform:translateY(-1px);z-index:10}
+.time-block.dragging{opacity:.3;cursor:grabbing}
+.time-block.swap-selected{outline:2px solid var(--accent)!important;box-shadow:0 0 0 4px rgba(200,240,110,.18);transform:scale(1.03);z-index:30;animation:none!important}
+.time-block.drag-over-target{outline:2px dashed var(--accent);transform:scale(1.02)}
+.time-block.completed{opacity:.28;filter:grayscale(.9);text-decoration:line-through;border-left-color:var(--muted)!important;background:rgba(122,125,133,.07)!important;color:var(--muted)!important}
+.time-block.rolled-over{border-style:dashed!important}
+.time-block.alert-active{animation:pulseGreen 1s ease-in-out infinite;z-index:20}
+.time-block.alert-upcoming{animation:pulseAmber 1.5s ease-in-out infinite}
+.time-block.alert-overdue{opacity:.4;filter:grayscale(.6);border-left-color:var(--danger)!important}
+.time-block.alert-overdue .block-time::after{content:' LATE';color:var(--danger);font-size:9px;margin-left:4px}
+@keyframes livepulse{0%,100%{opacity:1}50%{opacity:.2}}
+@keyframes pulseAmber{0%,100%{box-shadow:0 0 0 1px rgba(240,160,110,.5)}50%{box-shadow:0 0 0 4px rgba(240,160,110,.12)}}
+@keyframes pulseGreen{0%,100%{box-shadow:0 0 0 2px rgba(200,240,110,.5)}50%{box-shadow:0 0 0 5px rgba(200,240,110,.15)}}
+.block-time{font-size:10px;opacity:.65;margin-bottom:2px}
+.block-name{font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.block-dur{font-size:10px;opacity:.6;margin-top:2px}.alert-active .block-dur{opacity:1;color:var(--accent);font-size:11px;letter-spacing:.3px}
+.block-tag{font-size:9px;opacity:.7;margin-top:2px;color:inherit}
+.session-badge{position:absolute;top:5px;right:6px;background:rgba(0,0,0,.3);border-radius:3px;font-size:9px;padding:1px 4px;color:inherit;opacity:.7}
+.break-block{background:rgba(255,255,255,.025);border:1px dashed var(--border);border-radius:5px;padding:5px 8px;font-size:10px;color:var(--muted);text-align:center}
+#syncStatus:hover{border-color:var(--accent2)!important;color:var(--accent2)!important}
+.pastdue-divider{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:6px 4px 2px;opacity:.5;border-top:1px dashed var(--border);margin-top:4px}
+.time-block.pastdue{opacity:.32;filter:grayscale(60%);pointer-events:none;border-style:dashed}
+.time-block.pastdue .block-name{text-decoration:line-through}
+.free-label{font-size:10px;color:var(--muted);text-align:center;padding:18px 0;opacity:.6}
+.now-line{border-top:1px dashed var(--accent);margin:3px 0;position:relative}
+.now-line::before{content:'NOW';position:absolute;top:-8px;left:0;font-size:9px;color:var(--accent);background:var(--surface);padding:0 4px;letter-spacing:.5px}
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:280px;color:var(--muted);gap:10px}
+.empty-state .big-icon{font-size:44px;opacity:.25}
+.empty-state p{font-size:12px;text-align:center;max-width:240px;line-height:1.7}
+.info-bar{background:rgba(200,240,110,.06);border:1px solid rgba(200,240,110,.15);border-radius:8px;color:var(--accent);font-size:11px;padding:8px 14px;margin-top:10px;display:none}
+.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:10px;color:var(--muted);margin-top:10px}
+.legend span{display:flex;align-items:center;gap:4px}
+.legend-dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+.c0{background:rgba(200,240,110,.14);border-left:3px solid var(--accent);color:var(--accent)}
+.c1{background:rgba(110,200,240,.14);border-left:3px solid var(--accent2);color:var(--accent2)}
+.c2{background:rgba(240,160,110,.14);border-left:3px solid var(--accent3);color:var(--accent3)}
+.c3{background:rgba(200,110,240,.14);border-left:3px solid #c86ef0;color:#c86ef0}
+.c4{background:rgba(240,200,110,.14);border-left:3px solid #f0c86e;color:#f0c86e}
+.c5{background:rgba(110,240,200,.14);border-left:3px solid #6ef0c8;color:#6ef0c8}
+.c6{background:rgba(240,110,160,.14);border-left:3px solid #f06ea0;color:#f06ea0}
+.c7{background:rgba(110,160,240,.14);border-left:3px solid #6ea0f0;color:#6ea0f0}
+.tooltip-box{position:absolute;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 9px;font-size:11px;color:var(--text);pointer-events:none;z-index:9999;display:none;white-space:nowrap}
+@keyframes slideIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* Desktop: panels side by side as before */
+@media(min-width:821px){
+  #menuBtn{display:none!important}
+  #drawerOverlay,#drawer{display:none!important}
+  .panels{display:grid;grid-template-columns:320px 1fr;gap:16px}
+}
+
+/* Mobile: hide left column panels, show only calendar; drawer holds everything else */
+@media(max-width:820px){
+  #menuBtn{display:flex;align-items:center;justify-content:center}
+  .app{padding:12px 10px}
+  header{padding:0;margin-bottom:14px;gap:10px}
+  header h1{font-size:1.3rem}
+  header>span:not(#clock){display:none}
+  #syncStatus{font-size:9px;padding:3px 6px}
+  .panels{display:block}
+  /* Hide the left-column panel stack on mobile — lives in drawer instead */
+  .panels>div:first-child{display:none}
+  .panels>div:last-child{display:block}
+  .panel{border-radius:10px}
+}
+
+/* Drawer inner panels share existing .panel-body styling */
+.drawer-section .setting-row{margin-bottom:14px}
+.drawer-section .panel-body{padding:0}
+.drawer-section .panel{background:none;border:none;border-radius:0}
+.drawer-section .panel-header{display:none}
+</style>
+</head>
+<body>
+<!-- ── Drawer (mobile) — outside .app to avoid stacking context issues ── -->
+<div id="swapBar" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--surface2);border:1px solid var(--accent);border-radius:10px;padding:10px 18px;z-index:500;font-size:12px;color:var(--accent);display:none;align-items:center;gap:12px;box-shadow:0 4px 20px rgba(0,0,0,.5)"><span id="swapBarMsg">Tap another task to swap</span><button id="swapCancelBtn" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-family:'DM Mono',monospace;font-size:11px;padding:4px 10px;cursor:pointer">Cancel</button></div>
+<div id="drawerOverlay"></div>
+<div id="drawer">
+    <div id="drawerHeader">
+      <span id="drawerTitle">WeekFlow</span>
+      <button id="drawerClose">✕</button>
+    </div>
+    <div id="drawerTabs">
+      <button class="drawer-tab active" data-tab="tasks">Tasks</button>
+      <button class="drawer-tab" data-tab="breaks">Breaks</button>
+      <button class="drawer-tab" data-tab="settings">Settings</button>
+      <button class="drawer-tab" data-tab="sync">Sync</button>
+    </div>
+
+    <!-- Tasks tab -->
+    <div class="drawer-section active" id="dtab-tasks">
+      <div style="display:grid;grid-template-columns:20px 1fr 72px 26px;gap:6px;margin-bottom:8px">
+        <span></span>
+        <span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">Task Name</span>
+        <span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;text-align:center">Hours</span>
+        <span></span>
+      </div>
+      <div class="task-input-area" id="taskList"></div>
+      <p class="dur-hint">0.5 = 30 min · 2 = 2 hrs · 8 = full day</p>
+      <button class="add-task-btn" id="addTaskBtn">+ Add Task</button>
+      <div class="info-bar" id="infoBar"></div>
+      <button class="generate-btn" id="generateBtn" style="display:none;margin-top:14px">Schedule from Today →</button>
+      <button onclick="clearState()" style="margin-top:8px;width:100%;background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-family:'DM Mono',monospace;font-size:10px;padding:6px;cursor:pointer;letter-spacing:.5px">🗑 Clear saved data &amp; reset</button>
+    </div>
+
+    <!-- Breaks tab -->
+    <div class="drawer-section" id="dtab-breaks">
+      <p style="font-size:10px;color:var(--muted);margin-bottom:12px;line-height:1.6">Blocked daily — tasks will not be scheduled here.</p>
+      <div style="display:grid;grid-template-columns:1fr 70px 26px;gap:6px;margin-bottom:6px">
+        <span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">Label</span>
+        <span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;text-align:center">Duration</span>
+        <span></span>
+      </div>
+      <div id="breakList" style="display:flex;flex-direction:column;gap:6px;"></div>
+      <button class="add-task-btn" id="addBreakBtn" style="margin-top:10px">+ Add Break</button>
+    </div>
+
+    <!-- Settings tab -->
+    <div class="drawer-section" id="dtab-settings">
+      <div class="inline-row">
+        <div class="setting-row"><label>Start</label><input type="time" id="workStartD" value="08:00"></div>
+        <div class="setting-row"><label>End</label><input type="time" id="workEndD" value="17:00"></div>
+      </div>
+      <div class="setting-row"><label>Session block size</label>
+        <select id="blockSizeD">
+          <option value="30">30 min</option>
+          <option value="60" selected>1 hour</option>
+          <option value="90">1.5 hours</option>
+          <option value="120">2 hours</option>
+        </select>
+      </div>
+      <div class="setting-row"><label>Weekend schedule</label>
+        <select id="skipWeekendsD">
+          <option value="1" selected>Mon – Fri only</option>
+          <option value="sat">Saturday only (8 AM – 1 PM)</option>
+          <option value="0">All days including weekends</option>
+        </select>
+      </div>
+      <div class="setting-row" style="margin-bottom:0">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:12px">
+          <input type="checkbox" id="soundAlertsD" checked style="width:auto;accent-color:var(--accent)">
+          Sound alert when task starts
+        </label>
+      </div>
+      <div class="legend" style="margin-top:12px">
+        <span><span class="legend-dot" style="background:var(--accent)"></span>Active</span>
+        <span><span class="legend-dot" style="background:var(--accent3)"></span>Soon</span>
+        <span><span class="legend-dot" style="background:var(--danger)"></span>Overdue</span>
+        <span><span class="legend-dot" style="background:var(--accent3);border-radius:0"></span>Rolled over</span>
+      </div>
+    </div>
+
+    <!-- Sync tab -->
+    <div class="drawer-section" id="dtab-sync">
+      <div class="setting-row">
+        <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">⚡ Supabase Real-Time Sync</label>
+        <input type="text" id="sbUrlD" placeholder="Supabase URL" value="https://xschfdgrlbgcouqaepsp.supabase.co" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Mono',monospace;font-size:11px;padding:7px 9px;outline:none;width:100%;margin-top:5px">
+        <input type="password" id="sbKeyD" placeholder="Supabase anon key" value="sb_publishable_4aeaSsBVJU8f_F_0H0GpGg_2-CQU-bC" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Mono',monospace;font-size:11px;padding:7px 9px;outline:none;width:100%;margin-top:5px">
+        <button onclick="bootLoad()" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--accent2);font-family:'DM Mono',monospace;font-size:11px;padding:8px;cursor:pointer;margin-top:8px;transition:all .15s">🔄 Connect &amp; Sync</button>
+      </div>
+    </div>
+  </div><!-- end drawer -->
+
+<div class="app">
+  <header>
+    <button id="menuBtn" aria-label="Menu">☰</button>
+    <h1>WeekFlow</h1>
+    <span>// live · <span style="color:var(--accent);animation:livepulse 2s infinite">●</span></span>
+    <span id="clock">--:--</span>
+    <span id="syncStatus" onclick="syncNow()" title="Click to sync now." style="font-size:10px;color:var(--muted);cursor:pointer;letter-spacing:.5px;padding:4px 8px;border:1px solid var(--border);border-radius:20px;transition:all .2s">☁ Drive sync on</span>
+  </header>
+  <div class="panels">
+    <div>
+
+      <!-- ── Settings Panel (collapsed by default on mobile) ── -->
+      <div class="panel" id="panelSettings">
+        <div class="panel-header" onclick="togglePanel('panelSettings')">
+          <span style="display:flex;align-items:center;gap:8px"><div class="dot"></div> Working Hours &amp; Settings</span>
+          <span class="chevron">&#9660;</span>
+        </div>
+        <div class="panel-body" id="bodySettings">
+          <div class="inline-row">
+            <div class="setting-row"><label>Start</label><input type="time" id="workStart" value="08:00"></div>
+            <div class="setting-row"><label>End</label><input type="time" id="workEnd" value="17:00"></div>
+          </div>
+          <div class="setting-row"><label>Session block size</label>
+            <select id="blockSize">
+              <option value="30">30 min</option>
+              <option value="60" selected>1 hour</option>
+              <option value="90">1.5 hours</option>
+              <option value="120">2 hours</option>
+            </select>
+          </div>
+          <div class="setting-row"><label>Weekend schedule</label>
+            <select id="skipWeekends">
+              <option value="1" selected>Mon – Fri only</option>
+              <option value="sat">Saturday only (8 AM – 1 PM)</option>
+              <option value="0">All days including weekends</option>
+            </select>
+          </div>
+          <div class="setting-row" style="margin-bottom:0">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:12px">
+              <input type="checkbox" id="soundAlerts" checked style="width:auto;accent-color:var(--accent)">
+              Sound alert when task starts
+            </label>
+          </div>
+          <div class="legend" style="margin-top:12px">
+            <span><span class="legend-dot" style="background:var(--accent)"></span>Active</span>
+            <span><span class="legend-dot" style="background:var(--accent3)"></span>Soon</span>
+            <span><span class="legend-dot" style="background:var(--danger)"></span>Overdue</span>
+            <span><span class="legend-dot" style="background:var(--accent3);border-radius:0"></span>Rolled over</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Breaks Panel (desktop only — on mobile lives in drawer) ── -->
+      <div class="panel" style="margin-top:10px" id="panelBreaks">
+        <div class="panel-header">
+          <span style="display:flex;align-items:center;gap:8px"><div class="dot" style="background:var(--accent3)"></div> Daily Fixed Breaks</span>
+        </div>
+        <div class="panel-body" id="bodyBreaks">
+          <p style="font-size:10px;color:var(--muted);margin-bottom:12px;line-height:1.6">Blocked daily — tasks will not be scheduled here.</p>
+          <div style="display:grid;grid-template-columns:1fr 70px 26px;gap:6px;margin-bottom:6px">
+            <span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">Label</span>
+            <span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;text-align:center">Duration</span>
+            <span></span>
+          </div>
+          <div id="breakListDesktop" style="display:flex;flex-direction:column;gap:6px;"></div>
+          <button class="add-task-btn" id="addBreakBtnDesktop" style="margin-top:10px">+ Add Break</button>
+        </div>
+      </div>
+
+      <!-- ── Tasks Panel (desktop only — on mobile lives in drawer) ── -->
+      <div class="panel" style="margin-top:10px" id="panelTasks">
+        <div class="panel-header">
+          <span style="display:flex;align-items:center;gap:8px"><div class="dot" style="background:var(--accent2)"></div> Tasks</span>
+        </div>
+        <div class="panel-body" id="bodyTasks">
+          <div style="display:grid;grid-template-columns:20px 1fr 72px 26px;gap:6px;margin-bottom:8px">
+            <span></span>
+            <span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">Task Name</span>
+            <span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;text-align:center">Hours</span>
+            <span></span>
+          </div>
+          <div class="task-input-area" id="taskListDesktop"></div>
+          <p class="dur-hint">0.5 = 30 min · 2 = 2 hrs · 8 = full day</p>
+          <button class="add-task-btn" id="addTaskBtnDesktop">+ Add Task</button>
+          <div class="info-bar" id="infoBarDesktop"></div>
+          <button onclick="clearState()" style="margin-top:8px;width:100%;background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-family:'DM Mono',monospace;font-size:10px;padding:6px;cursor:pointer;letter-spacing:.5px" onmouseenter="this.style.borderColor='var(--danger)';this.style.color='var(--danger)'" onmouseleave="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">&#x1F5D1; Clear saved data &amp; reset</button>
+          <button class="generate-btn" id="generateBtnDesktop" style="display:none">Schedule from Today →</button>
+        </div>
+      </div>
+
+      <!-- ── Sync Panel (collapsed by default) ── -->
+      <div class="panel" style="margin-top:10px" id="panelSync">
+        <div class="panel-header" onclick="togglePanel('panelSync')">
+          <span style="display:flex;align-items:center;gap:8px"><div class="dot" style="background:var(--accent2);opacity:.5"></div> Cloud Sync</span>
+          <span class="chevron">&#9660;</span>
+        </div>
+        <div class="panel-body hidden" id="bodySync">
+          <div class="setting-row">
+            <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">&#9889; Supabase Real-Time Sync</label>
+            <input type="text" id="sbUrl" placeholder="Supabase URL" value="https://xschfdgrlbgcouqaepsp.supabase.co" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Mono',monospace;font-size:11px;padding:7px 9px;outline:none;width:100%;margin-top:5px">
+            <input type="password" id="sbKey" placeholder="Supabase anon key" value="sb_publishable_4aeaSsBVJU8f_F_0H0GpGg_2-CQU-bC" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Mono',monospace;font-size:11px;padding:7px 9px;outline:none;width:100%;margin-top:5px">
+            <input type="hidden" id="deviceId" value="">
+            <button onclick="bootLoad()" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--accent2);font-family:'DM Mono',monospace;font-size:11px;padding:8px;cursor:pointer;margin-top:8px;transition:all .15s" onmouseenter="this.style.borderColor='var(--accent2)'" onmouseleave="this.style.borderColor='var(--border)'">&#128260; Connect &amp; Sync</button>
+            <p style="font-size:9px;color:var(--muted);margin-top:6px;opacity:.7;line-height:1.5">Run once in Supabase SQL Editor:</p>
+            <pre style="font-size:9px;background:var(--surface3);border-radius:5px;padding:6px;color:var(--accent);overflow-x:auto;margin-top:4px;line-height:1.6">create table weekflow_state (
+  id integer primary key,
+  state text,
+  device_id text,
+  saved_at bigint
+);
+alter table weekflow_state enable row level security;
+create policy "allow all" on weekflow_state
+  for all using (true) with check (true);</pre>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div>
+      <div class="panel" id="calendarPanel">
+        <div class="calendar-header">
+          <span class="calendar-title">Forward Schedule</span>
+          <div class="calendar-meta">
+            <span id="slotsInfo"></span>
+            <span id="spanInfo"></span>
+            <span class="rollover-badge" id="rolloverBadge"></span>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button id="undoBtn" title="Undo" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);cursor:pointer;font-size:14px;padding:4px 10px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;opacity:0.3">↩</button>
+            <button id="redoBtn" title="Redo" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);cursor:pointer;font-size:14px;padding:4px 10px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;opacity:0.3">↪</button>
+          </div>
+        </div>
+        <div class="cal-scroll">
+          <div id="calendarBody">
+            <div class="empty-state">
+              <div class="big-icon">&#128197;</div>
+              <p>Tasks fill from today. Unticked tasks roll over automatically at midnight.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="tooltip-box" id="tooltip"></div>
+<script>
+(function(){
+'use strict';
+var taskIdCounter=0;
+var scheduledDays=[];
+var dragData=null;
+var swapState=null; // {dayIdx, taskId, session, el} — mobile tap-to-swap
+var completedTasks={};
+var alertedTasks={};
+var audioCtx=null;
+var lastCheckedDate=new Date().toDateString();
+var rolloverCount=0;
+
+// ── Undo/Redo history ────────────────────────────────────────────────────────
+var undoStack=[];
+var redoStack=[];
+var MAX_HISTORY=30;
+function snapshotForUndo(){
+  var snap=JSON.stringify({days:scheduledDays.map(function(d){return{date:d.date.toISOString(),blocks:d.blocks.map(function(b){var c={};for(var k in b)c[k]=b[k];return c;})};})});
+  if(undoStack.length&&undoStack[undoStack.length-1]===snap)return;
+  undoStack.push(snap);
+  if(undoStack.length>MAX_HISTORY)undoStack.shift();
+  redoStack=[];
+  updateUndoButtons();
+}
+function applySnapshot(snap){
+  var data=JSON.parse(snap);
+  scheduledDays=data.days.map(function(d){return{date:new Date(d.date),blocks:d.blocks};});
+  renderCalendar();
+  updateUndoButtons();
+}
+function undoAction(){
+  if(undoStack.length<2)return;
+  redoStack.push(undoStack.pop());
+  applySnapshot(undoStack[undoStack.length-1]);
+}
+function redoAction(){
+  if(!redoStack.length)return;
+  var snap=redoStack.pop();
+  undoStack.push(snap);
+  applySnapshot(snap);
+}
+function updateUndoButtons(){
+  var u=document.getElementById('undoBtn'),r=document.getElementById('redoBtn');
+  if(u)u.style.opacity=undoStack.length>1?'1':'0.3';
+  if(r)r.style.opacity=redoStack.length?'1':'0.3';
+}
+
+var DAY_FULL=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+var MONTH=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function pad(n){return n<10?'0'+n:String(n);}
+function timeToMin(v){var p=v.split(':');return parseInt(p[0])*60+parseInt(p[1]);}
+function minToTime(m){var h=Math.floor(m/60),mn=m%60,s=h>=12?'PM':'AM',hh=h>12?h-12:h===0?12:h;return hh+':'+(mn<10?'0':'')+mn+' '+s;}
+function sameDay(a,b){return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();}
+function isWeekend(d,satOnly){var w=d.getDay();if(satOnly) return w===0; /* satOnly: skip Sun only, Sat is a work day */return w===0||w===6;}
+function dateKey(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+function nextWorkDate(d,skipWE,satOnly){
+  var nd=new Date(d);nd.setDate(nd.getDate()+1);
+  if(skipWE||satOnly){while(isWeekend(nd,satOnly))nd.setDate(nd.getDate()+1);}
+  return nd;
+}
+
+function getSettings(){
+  // Read from whichever inputs have values — drawer (mobile) or desktop panel
+  function getVal(drawerId, desktopId){
+    var d=document.getElementById(drawerId);
+    var de=document.getElementById(desktopId);
+    if(d&&d.value) return d.value;
+    if(de&&de.value) return de.value;
+    return '';
+  }
+  function getChecked(drawerId, desktopId){
+    var d=document.getElementById(drawerId);
+    return d ? d.checked : (document.getElementById(desktopId)||{checked:true}).checked;
+  }
+  var wkVal=getVal('skipWeekendsD','skipWeekends')||'1';
+  return{
+    ws:timeToMin(getVal('workStartD','workStart')||'08:00'),
+    we:timeToMin(getVal('workEndD','workEnd')||'17:00'),
+    bs:parseInt(getVal('blockSizeD','blockSize')||'60'),
+    skipWE:wkVal==='1',
+    satOnly:wkVal==='sat'
+  };
+}
+
+// ── syncBreaksToDesktop / syncBreaksToDrawer keep both lists mirrored ──────
+function collectBreakData(){
+  // Read raw break data from whichever list has rows (prefer drawer #breakList,
+  // fallback to desktop #breakListDesktop; deduplicate by label+time).
+  var seen={};
+  var out=[];
+  function readList(listId){
+    var list=document.getElementById(listId);
+    if(!list) return;
+    list.querySelectorAll('.break-row').forEach(function(r){
+      var labelEl=r.querySelector('.break-label');
+      var timeEl=r.querySelector('.break-time');
+      var durEl=r.querySelector('.break-dur');
+      var enEl=r.querySelector('.break-enabled');
+      if(!timeEl||!durEl) return;
+      var key=(labelEl?labelEl.value:'')+timeEl.value;
+      if(seen[key]) return;
+      seen[key]=true;
+      out.push({label:labelEl?labelEl.value||'Break':'Break',
+        time:timeEl.value,dur:parseInt(durEl.value)||0,
+        enabled:enEl?enEl.checked:true});
+    });
+  }
+  readList('breakList');
+  readList('breakListDesktop');
+  return out;
+}
+
+function syncBreaksToDesktop(){
+  var data=collectBreakData();
+  var dl=document.getElementById('breakListDesktop');
+  if(!dl) return;
+  dl.innerHTML='';
+  data.forEach(function(b){addBreakRowDesktop(b.label,b.time,b.dur,b.enabled);});
+}
+function syncBreaksToDrawer(){
+  var data=collectBreakData();
+  var dl=document.getElementById('breakList');
+  if(!dl) return;
+  dl.innerHTML='';
+  data.forEach(function(b){addBreakRow(b.label,b.time,b.dur,b.enabled);});
+}
+
+function getBreaks(){
+  // Returns array of {label, start (min), end (min)} for all active breaks
+  // Reads from BOTH DOM lists so desktop↔drawer are always in sync.
+  var s=getSettings();
+  var breaks=[];
+  var raw=collectBreakData();
+  for(var i=0;i<raw.length;i++){
+    var b=raw[i];
+    if(!b.enabled) continue;
+    if(b.dur<=0) continue;
+    var bStart=timeToMin(b.time);
+    var bEnd=bStart+b.dur;
+    if(bStart>=s.we||bEnd<=s.ws) continue;
+    breaks.push({
+      label:b.label,
+      start:Math.max(bStart,s.ws),
+      end:Math.min(bEnd,s.we)
+    });
+  }
+  breaks.sort(function(a,b){return a.start-b.start;});
+  return breaks;
+}
+
+function getDaySlots(s,dateObj){
+  // If Saturday-only mode and this is Sunday, return no slots (not a work day)
+  if(s.satOnly&&dateObj&&dateObj.getDay()===0) return [];
+  // Saturday-only mode uses fixed 8am-1pm regardless of work hours setting
+  var ws=s.ws,we=s.we;
+  if(s.satOnly&&dateObj&&dateObj.getDay()===6){ws=timeToMin('08:00');we=timeToMin('13:00');}
+  var breaks=getBreaks();
+  // Merge overlapping break windows
+  var merged=[];
+  for(var i=0;i<breaks.length;i++){
+    var b=breaks[i];
+    if(merged.length===0){merged.push({start:b.start,end:b.end});}
+    else{
+      var last=merged[merged.length-1];
+      if(b.start<=last.end){last.end=Math.max(last.end,b.end);}
+      else{merged.push({start:b.start,end:b.end});}
+    }
+  }
+  // Carve free slots
+  var slots=[];
+  var cur=ws;
+  for(var j=0;j<merged.length;j++){
+    var brk=merged[j];
+    if(brk.start>cur&&cur<we) slots.push({start:cur,end:Math.min(brk.start,we)});
+    cur=Math.max(cur,brk.end);
+  }
+  if(cur<we) slots.push({start:cur,end:we});
+  return slots.length?slots:[{start:ws,end:we}];
+}
+
+function packDay(blocks,dayDate,s,startFrom){
+  var slots=getDaySlots(s,dayDate);
+  var sorted=blocks.slice().sort(function(a,b){
+    if(a.order!==undefined&&b.order!==undefined)return a.order-b.order;
+    return (a.startMin||0)-(b.startMin||0);
+  });
+  var placed=[];
+  var now=new Date();
+  var isToday=sameDay(dayDate,now);
+  var earliest=isToday?(startFrom!==undefined?startFrom:now.getHours()*60+now.getMinutes()):null;
+
+  // Per-slot cursor: tracks where the next task can start in each slot
+  // earliest only clamps a slot if the current time falls INSIDE that slot —
+  // slots that are fully in the future are left at their natural start,
+  // slots that are fully in the past are skipped (cursor pushed to end).
+  var slotCursors=slots.map(function(sl){
+    if(earliest===null) return sl.start;
+    if(earliest>=sl.end) return sl.end;      // slot already passed — mark exhausted
+    if(earliest>sl.start) return earliest;   // current time is mid-slot — start from now
+    return sl.start;                          // slot is in the future — fully available
+  });
+
+  for(var i=0;i<sorted.length;i++){
+    var blk=sorted[i];
+    var remaining=blk.durationMin;
+    var segments=[];
+
+    for(var sl=0;sl<slots.length&&remaining>0;sl++){
+      var slot=slots[sl];
+      var cur=slotCursors[sl];
+      if(cur>=slot.end) continue;
+      var fits=Math.min(remaining,slot.end-cur);
+      if(fits>0){
+        segments.push({start:cur,dur:fits,slotIdx:sl});
+        remaining-=fits;
+      }
+    }
+
+    if(segments.length===0){
+      // Zero segments placed for this block — full overflow
+      return{placed:placed,overflow:sorted.slice(i),overflowBlock:blk,partialOverflow:[]};
+    }
+
+    // Check if we placed LESS than the full durationMin (partial fit across breaks)
+    var totalPlaced=0;
+    for(var ks=0;ks<segments.length;ks++) totalPlaced+=segments[ks].dur;
+    if(totalPlaced<blk.durationMin){
+      // Partial: some minutes fit, the rest overflow
+      for(var k=0;k<segments.length;k++){
+        var seg=segments[k];
+        var copy={};for(var key in blk)copy[key]=blk[key];
+        copy.startMin=seg.start;
+        copy.durationMin=seg.dur;
+        copy.splitIdx=k;
+        copy.splitTotal=segments.length;
+        placed.push(copy);
+        slotCursors[seg.slotIdx]=seg.start+seg.dur;
+      }
+      // Build leftover block carrying remaining minutes
+      var leftoverBlk={};for(var lk in blk)leftoverBlk[lk]=blk[lk];
+      leftoverBlk.durationMin=blk.durationMin-totalPlaced;
+      delete leftoverBlk.startMin;delete leftoverBlk.splitIdx;delete leftoverBlk.splitTotal;
+      return{placed:placed,overflow:sorted.slice(i+1),overflowBlock:leftoverBlk,
+        partialOverflow:[leftoverBlk]};
+    }
+
+    for(var k=0;k<segments.length;k++){
+      var seg=segments[k];
+      var copy={};for(var key in blk)copy[key]=blk[key];
+      copy.startMin=seg.start;
+      copy.durationMin=seg.dur;
+      copy.splitIdx=k;
+      copy.splitTotal=segments.length;
+      placed.push(copy);
+      slotCursors[seg.slotIdx]=seg.start+seg.dur;
+    }
+  }
+  return{placed:placed,overflow:[],overflowBlock:null,partialOverflow:[]};
+}
+
+function repackDay(day,s){
+  var now=new Date();
+  var isToday=sameDay(day.date,now);
+  var cur=isToday?now.getHours()*60+now.getMinutes():null;
+
+  // Separate: completed ghosts + pastDue ghosts stay at fixed times; active ones repack
+  var completed=day.blocks.filter(function(b){return !!completedTasks[String(b.taskId)];});
+  var pastDue=day.blocks.filter(function(b){return !completedTasks[String(b.taskId)]&&!!b.pastDue;});
+  var active=day.blocks.filter(function(b){return !completedTasks[String(b.taskId)]&&!b.pastDue;});
+
+  var ordered=active.slice().sort(function(a,b){
+    if(a.order!==undefined&&b.order!==undefined)return a.order-b.order;
+    return (a.startMin||0)-(b.startMin||0);
+  });
+  var result=packDay(ordered,day.date,s,cur);
+  // Merge: completed + pastDue ghosts keep original times; active blocks repacked
+  day.blocks=completed.concat(pastDue).concat(result.placed);
+}
+
+function performRollover(){
+  if(!scheduledDays.length)return;
+  var s=getSettings();
+  var now=new Date();
+  var yesterday=new Date(now);yesterday.setDate(yesterday.getDate()-1);
+  var blocksToRoll=[];
+
+  for(var d=0;d<scheduledDays.length;d++){
+    var day=scheduledDays[d];
+    if(!sameDay(day.date,yesterday))continue;
+    var remaining=[];
+    for(var b=0;b<day.blocks.length;b++){
+      var block=day.blocks[b];
+      if(!completedTasks[String(block.taskId)]){
+        var rolled={};for(var k in block)rolled[k]=block[k];
+        rolled.rolledOver=true;
+        rolled.rolledFrom=MONTH[yesterday.getMonth()]+' '+yesterday.getDate();
+        delete rolled.startMin;
+        rolled.order=b;
+        blocksToRoll.push(rolled);
+      } else {
+        remaining.push(block);
+      }
+    }
+    day.blocks=remaining;
+    break;
+  }
+
+  if(blocksToRoll.length===0)return;
+
+  var todayDate=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  if((s.skipWE||s.satOnly)&&isWeekend(todayDate,s.satOnly)){while(isWeekend(todayDate,s.satOnly))todayDate.setDate(todayDate.getDate()+1);}
+
+  var dk=dateKey(todayDate);
+  var targetDay=null;
+  for(var d=0;d<scheduledDays.length;d++){
+    if(dateKey(scheduledDays[d].date)===dk){targetDay=scheduledDays[d];break;}
+  }
+  if(!targetDay){
+    targetDay={date:new Date(todayDate),blocks:[]};
+    scheduledDays.push(targetDay);
+    scheduledDays.sort(function(a,b){return a.date-b.date;});
+  }
+
+  for(var i=0;i<blocksToRoll.length;i++){
+    blocksToRoll[i].order=targetDay.blocks.length+i;
+    delete blocksToRoll[i].pastDue; // clear ghost flag — fresh start on new day
+    targetDay.blocks.push(blocksToRoll[i]);
+  }
+  repackDay(targetDay,s);
+
+  rolloverCount+=blocksToRoll.length;
+  var badge=document.getElementById('rolloverBadge');
+  badge.textContent=rolloverCount+' rolled over';
+  badge.style.display='inline-block';
+
+  renderCalendar();
+  showInfo(blocksToRoll.length+' unfinished task'+(blocksToRoll.length>1?'s':'')+' rolled into today.','warn');
+}
+
+function checkDayRollover(){
+  var now=new Date();
+  var todayStr=now.toDateString();
+  if(todayStr!==lastCheckedDate){
+    lastCheckedDate=todayStr;
+    performRollover();
+  }
+}
+
+function initAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();}
+function playAlert(){
+  if(!document.getElementById('soundAlerts').checked)return;
+  initAudio();if(audioCtx.state==='suspended')audioCtx.resume();
+  var o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  o.connect(g);g.connect(audioCtx.destination);
+  o.type='sine';o.frequency.setValueAtTime(880,audioCtx.currentTime);
+  o.frequency.exponentialRampToValueAtTime(440,audioCtx.currentTime+0.3);
+  g.gain.setValueAtTime(0.22,audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.5);
+  o.start();o.stop(audioCtx.currentTime+0.5);
+}
+
+function addTaskRow(name,dur,existingId){
+  var isRestore=existingId!==undefined;
+  var id=isRestore?parseInt(existingId):taskIdCounter;
+  if(!isRestore){taskIdCounter++;}
+  if(id>=taskIdCounter)taskIdCounter=id+1;
+  var list=document.getElementById('taskList');
+  var row=document.createElement('div');
+  row.className='task-row';row.dataset.id=String(id);
+  var cb=document.createElement('input');cb.type='checkbox';cb.className='task-complete';
+  cb.addEventListener('change',function(){
+    var sid=String(row.dataset.id);
+    var s=getSettings();
+    var now=new Date();
+    var nowMin=now.getHours()*60+now.getMinutes();
+    var mirrorRow=document.querySelector('#taskListDesktop .task-row[data-id="'+sid+'"]');
+    if(mirrorRow){var mcb=mirrorRow.querySelector('.task-complete');if(mcb)mcb.checked=cb.checked;mirrorRow.classList.toggle('completed',cb.checked);}
+    if(cb.checked){
+      completedTasks[sid]=true;row.classList.add('completed');
+      for(var d=0;d<scheduledDays.length;d++){
+        var day=scheduledDays[d];if(!sameDay(day.date,now))continue;
+        day.blocks=day.blocks.filter(function(b){return String(b.taskId)!==sid;});
+        repackDay(day,s);break;
+      }
+    } else {
+      delete completedTasks[sid];row.classList.remove('completed');
+      if(scheduledDays.length){
+        var taskName=row.querySelector('.task-name-inp').value.trim();
+        var taskDur=parseFloat(row.querySelector('.task-dur-inp').value)||1;
+        var durationMin=Math.round(taskDur*60);
+        var bs=s.bs||60;var sessions=Math.ceil(durationMin/bs);var newBlocks=[];
+        for(var sess=1;sess<=sessions;sess++){
+          newBlocks.push({taskId:sid,taskName:taskName,durationMin:Math.min(bs,durationMin-(sess-1)*bs),
+            session:sess,totalSessions:sessions,color:'c'+(parseInt(sid)%8),
+            order:nowMin+sess,startMin:0,splitIdx:0,splitTotal:1});
+        }
+        for(var d=0;d<scheduledDays.length;d++){
+          var day=scheduledDays[d];if(!sameDay(day.date,now))continue;
+          day.blocks=day.blocks.concat(newBlocks);repackDay(day,s);break;
+        }
+      }
+    }
+    if(scheduledDays.length)renderCalendar();
+    debouncedSave();
+  });
+  var ni=document.createElement('input');ni.type='text';ni.placeholder='Task name';ni.value=name||'';ni.className='task-name-inp';
+  ni.addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('addTaskBtn').click();});
+  var di=document.createElement('input');di.type='number';di.placeholder='hrs';di.min='0.25';di.max='999';di.step='0.25';di.value=dur||'';di.className='dur-input task-dur-inp';
+  di.addEventListener('blur',function(){
+    var v=parseFloat(di.value);if(isNaN(v)||v<=0){di.value='';return;}
+    di.value=Math.round(v/0.25)*0.25;
+    if(ni.value.trim()&&di.value)triggerAutoSchedule();
+  });
+  var rb=document.createElement('button');rb.className='remove-btn';rb.innerHTML='&times;';
+  rb.addEventListener('click',function(){
+    var sid=String(id);
+    delete completedTasks[sid];
+    var mir=document.querySelector('#taskListDesktop .task-row[data-id="'+sid+'"]');
+    if(mir)mir.remove();
+    row.remove();
+    // Strip all blocks for this task from every scheduled day immediately,
+    // then rebuild so freed slots get backfilled by other tasks.
+    for(var rd=0;rd<scheduledDays.length;rd++){
+      scheduledDays[rd].blocks=scheduledDays[rd].blocks.filter(function(b){return String(b.taskId)!==sid;});
+    }
+    rebuildSchedule();
+    debouncedSave();
+  });
+  row.appendChild(cb);row.appendChild(ni);row.appendChild(di);row.appendChild(rb);
+  list.appendChild(row);
+  if(!isRestore)ni.focus();
+  ni.addEventListener('blur',function(){
+    // Only schedule if both name AND duration filled, and focus moved outside the row
+    setTimeout(function(){
+      var active=document.activeElement;
+      var stillInRow=row.contains(active);
+      if(!stillInRow&&ni.value.trim()&&parseFloat(di.value)>0) triggerAutoSchedule();
+    },150);
+  });
+}
+
+function getTasks(){
+  // Read from both lists but deduplicate by task ID so desktop+drawer never double-count.
+  var rows=document.querySelectorAll('.task-row');
+  var seen={};
+  var tasks=[];
+  for(var i=0;i<rows.length;i++){
+    var r=rows[i];
+    var tid=String(r.dataset.id);
+    if(seen[tid]) continue;
+    var n=r.querySelector('.task-name-inp').value.trim();
+    var d=parseFloat(r.querySelector('.task-dur-inp').value);
+    if(n&&!isNaN(d)&&d>0){seen[tid]=true;tasks.push({name:n,hours:d,id:tid,idx:tasks.length});}
+  }
+  return tasks;
+}
+
+// rebuildSchedule: re-runs packing preserving completed/pastDue ghosts
+// Called after task name/duration edits so gaps get backfilled without wiping day order
+function rebuildSchedule(){
+  var s=getSettings();
+  var now=new Date();
+  var tasks=getTasks();
+  if(!tasks.length){renderCalendar();return;}
+
+  // Collect pastDue and completed ghosts to restore after repacking
+  var ghosts=[];
+  for(var d=0;d<scheduledDays.length;d++){
+    var day=scheduledDays[d];
+    for(var b=0;b<day.blocks.length;b++){
+      var blk=day.blocks[b];
+      if(completedTasks[String(blk.taskId)]||blk.pastDue) ghosts.push({date:day.date,block:blk});
+    }
+  }
+
+  // Build per-task data from current schedule (active blocks only).
+  // Priority = SCHEDULE POSITION: earliest day-index + startMin across all blocks.
+  // This means swapping a task earlier makes it more urgent — not add order.
+  var taskRemaining={};
+  var taskMeta={};
+  var taskEarliestPos={}; // {tid: dayIndex*100000 + startMin} — lower = higher urgency
+  for(var d=0;d<scheduledDays.length;d++){
+    var day=scheduledDays[d];
+    for(var b=0;b<day.blocks.length;b++){
+      var blk=day.blocks[b];
+      if(completedTasks[String(blk.taskId)]||blk.pastDue) continue;
+      var tid=String(blk.taskId);
+      if(!taskRemaining[tid]) taskRemaining[tid]=0;
+      taskRemaining[tid]+=blk.durationMin;
+      if(!taskMeta[tid]) taskMeta[tid]={taskName:blk.taskName,taskId:blk.taskId,taskIdx:blk.taskIdx||0,color:blk.color||'c0',rolledOver:blk.rolledOver||false};
+      // Track earliest schedule position for this task
+      var pos=d*100000+(blk.startMin!==undefined?blk.startMin:(blk.order!==undefined?blk.order:99999));
+      if(taskEarliestPos[tid]===undefined||pos<taskEarliestPos[tid]) taskEarliestPos[tid]=pos;
+    }
+  }
+  // Update task names from current inputs; purge deleted tasks.
+  // IMPORTANT: do NOT overwrite taskRemaining from task input hours — that would
+  // reset partially-done tasks to full duration. taskRemaining was computed from
+  // the actual schedule blocks above and reflects true remaining work.
+  // Exception: if a task's hours were manually changed, apply the new total
+  // proportionally only when no blocks exist yet (handled in new-task injection below).
+  var currentTasks=getTasks();
+  var currentTaskIds={};
+  for(var t=0;t<currentTasks.length;t++){
+    var ct=currentTasks[t];
+    var tid=String(ct.id);
+    currentTaskIds[tid]=true;
+    if(taskMeta[tid]){
+      taskMeta[tid].taskName=ct.name;
+      // Only sync duration if the task input hours changed significantly
+      // AND the task has not been partially completed (i.e. taskRemaining == full hours).
+      // This lets hour-edits in the task panel take effect without losing partial progress.
+      var inputMin=Math.round(ct.hours*60);
+      if(taskMeta[tid]._origHours===undefined) taskMeta[tid]._origHours=taskRemaining[tid];
+      if(taskMeta[tid]._origHours===taskRemaining[tid]){
+        // Task is untouched (no partial progress) — safe to apply edited hours
+        taskRemaining[tid]=inputMin;
+        taskMeta[tid]._origHours=inputMin;
+      }
+      // If task is partially done, keep taskRemaining as-is (from blocks above)
+    }
+  }
+  for(var tid in taskMeta){
+    if(!currentTaskIds[tid]){
+      delete taskMeta[tid];
+      delete taskRemaining[tid];
+      delete taskEarliestPos[tid];
+    }
+  }
+
+  // Inject brand-new tasks (added after last generateSchedule, no blocks yet).
+  // New tasks have no position yet — place them after all scheduled tasks.
+  var maxPos=0;
+  for(var tid in taskEarliestPos){ if(taskEarliestPos[tid]>maxPos) maxPos=taskEarliestPos[tid]; }
+  var newTaskOffset=0;
+  for(var nt=0;nt<currentTasks.length;nt++){
+    var nct=currentTasks[nt];
+    var ntid=String(nct.id);
+    if(!taskMeta[ntid]){
+      taskMeta[ntid]={taskName:nct.name,taskId:ntid,taskIdx:nct.idx,color:'c'+(nct.idx%8),rolledOver:false};
+      taskRemaining[ntid]=Math.round(nct.hours*60);
+      // Place after all existing tasks, preserving relative add-order among new tasks
+      taskEarliestPos[ntid]=maxPos+1000+(newTaskOffset++)*10;
+    }
+  }
+
+  // Build queue sorted by SCHEDULE POSITION (not add order)
+  var taskQueue=Object.keys(taskMeta).map(function(tid){
+    return{taskName:taskMeta[tid].taskName,taskId:taskMeta[tid].taskId,
+      taskIdx:taskMeta[tid].taskIdx,durationMin:taskRemaining[tid],
+      color:taskMeta[tid].color,rolledOver:taskMeta[tid].rolledOver,
+      schedPos:taskEarliestPos[tid]!==undefined?taskEarliestPos[tid]:999999};
+  });
+  // Sort by schedule position — respects swaps, not add order
+  taskQueue.sort(function(a,b){return a.schedPos-b.schedPos;});
+
+  var curDate=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  if((s.skipWE||s.satOnly)&&isWeekend(curDate,s.satOnly)){while(isWeekend(curDate,s.satOnly))curDate.setDate(curDate.getDate()+1);}
+  var currentMin=now.getHours()*60+now.getMinutes();
+  var dayMap={};
+  var remaining=taskQueue.slice();
+  var safety=0;
+  while(remaining.length>0&&safety<365){
+    safety++;
+    var dk=dateKey(curDate);
+    if(!dayMap[dk])dayMap[dk]={date:new Date(curDate),blocks:[]};
+    var day=dayMap[dk];
+    var isToday=sameDay(curDate,now);
+    var sf=isToday?currentMin:null;
+    var nextRemaining=[];
+    for(var ti=0;ti<remaining.length;ti++){
+      var tblk=remaining[ti];
+      // Use schedPos as the order value so packDay respects schedule-position priority
+      var packOrder=tblk.schedPos!==undefined?tblk.schedPos:day.blocks.length+ti;
+      var testBlocks=day.blocks.concat([{
+        taskName:tblk.taskName,taskId:tblk.taskId,taskIdx:tblk.taskIdx,
+        durationMin:tblk.durationMin,color:tblk.color,order:packOrder,
+        rolledOver:tblk.rolledOver||false,session:1,totalSessions:1
+      }]);
+      var result=packDay(testBlocks,curDate,s,sf);
+      var placedBlocks=result.placed.filter(function(b){return String(b.taskId)===String(tblk.taskId);});
+      var placedMin=placedBlocks.reduce(function(acc,b){return acc+b.durationMin;},0);
+      if(placedMin>0){
+        day.blocks=result.placed;
+        var leftover=tblk.durationMin-placedMin;
+        if(leftover>0){var cont={};for(var kk in tblk)cont[kk]=tblk[kk];cont.durationMin=leftover;nextRemaining.push(cont);}
+      } else {
+        nextRemaining.push(tblk);
+      }
+    }
+    remaining=nextRemaining;
+    if(remaining.length>0) curDate=nextWorkDate(curDate,s.skipWE,s.satOnly);
+  }
+
+  // Re-attach ghosts
+  for(var g=0;g<ghosts.length;g++){
+    var gdk=dateKey(ghosts[g].date);
+    if(!dayMap[gdk])dayMap[gdk]={date:new Date(ghosts[g].date),blocks:[]};
+    dayMap[gdk].blocks.push(ghosts[g].block);
+  }
+
+  var allDays=[];
+  var keys=Object.keys(dayMap).sort();
+  for(var k=0;k<keys.length;k++) allDays.push(dayMap[keys[k]]);
+  recomputeSessionLabels(allDays);
+  scheduledDays=allDays;
+  renderCalendar();
+  showInfo('Schedule updated.');
+}
+
+// Recompute session/totalSessions labels for each task across all days in schedule order.
+// A "session" is now a contiguous appearance of a task on a given day.
+// Blocks that are split by a break within one day count as ONE session (they share splitIdx).
+function recomputeSessionLabels(days){
+  // Group all blocks by taskId, ordered by day then startMin
+  var taskBlocks={};
+  for(var d=0;d<days.length;d++){
+    var day=days[d];
+    for(var b=0;b<day.blocks.length;b++){
+      var blk=day.blocks[b];
+      if(completedTasks[String(blk.taskId)]||blk.pastDue) continue;
+      var tid=String(blk.taskId);
+      if(!taskBlocks[tid]) taskBlocks[tid]=[];
+      taskBlocks[tid].push({block:blk,dayIdx:d});
+    }
+  }
+  // For each task, assign session numbers by grouping consecutive blocks on same day
+  for(var tid in taskBlocks){
+    var entries=taskBlocks[tid];
+    // Group by day
+    var dayGroups=[];
+    var prevDayIdx=-1;
+    for(var i=0;i<entries.length;i++){
+      if(entries[i].dayIdx!==prevDayIdx){dayGroups.push([]);prevDayIdx=entries[i].dayIdx;}
+      dayGroups[dayGroups.length-1].push(entries[i].block);
+    }
+    var totalSessions=dayGroups.length;
+    for(var s=0;s<dayGroups.length;s++){
+      var grp=dayGroups[s];
+      for(var g=0;g<grp.length;g++){
+        grp[g].session=s+1;
+        grp[g].totalSessions=totalSessions;
+      }
+    }
+  }
+}
+
+function generateSchedule(){
+  var tasks=getTasks();
+  if(!tasks.length){showInfo('Add at least one task with a duration.','warn');return;}
+  var s=getSettings();
+  if(s.we<=s.ws){showInfo('End time must be after start time.','warn');return;}
+  alertedTasks={};rolloverCount=0;
+  document.getElementById('rolloverBadge').style.display='none';
+
+  // Each task is one unit carrying its full duration.
+  // packDay splits it across break boundaries within a day automatically.
+  // Remaining minutes carry forward to the next day.
+  var taskQueue=[];
+  for(var t=0;t<tasks.length;t++){
+    var task=tasks[t];
+    taskQueue.push({taskName:task.name,taskId:task.id,taskIdx:t,
+      durationMin:Math.round(task.hours*60),color:'c'+(t%8),order:t,rolledOver:false});
+  }
+
+  var now=new Date();
+  var curDate=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  if((s.skipWE||s.satOnly)&&isWeekend(curDate,s.satOnly)){while(isWeekend(curDate,s.satOnly))curDate.setDate(curDate.getDate()+1);}
+  var currentMin=now.getHours()*60+now.getMinutes();
+
+  var dayMap={};
+  var remaining=taskQueue.slice(); // each entry has remaining durationMin
+  var safety=0;
+  while(remaining.length>0&&safety<365){
+    safety++;
+    var dk=dateKey(curDate);
+    if(!dayMap[dk])dayMap[dk]={date:new Date(curDate),blocks:[]};
+    var day=dayMap[dk];
+    var isToday=sameDay(curDate,now);
+    var sf=isToday?currentMin:null;
+
+    var nextRemaining=[];
+    for(var ti=0;ti<remaining.length;ti++){
+      var tblk=remaining[ti];
+      // Try to pack this task into today with its remaining duration
+      var testBlocks=day.blocks.concat([{
+        taskName:tblk.taskName,taskId:tblk.taskId,taskIdx:tblk.taskIdx,
+        durationMin:tblk.durationMin,color:tblk.color,order:day.blocks.length+ti,
+        rolledOver:tblk.rolledOver||false,session:1,totalSessions:1
+      }]);
+      var result=packDay(testBlocks,curDate,s,sf);
+      // How many minutes of this task were placed?
+      var placedBlocks=result.placed.filter(function(b){return String(b.taskId)===String(tblk.taskId);});
+      var placedMin=placedBlocks.reduce(function(acc,b){return acc+b.durationMin;},0);
+      if(placedMin>0){
+        day.blocks=result.placed;
+        var leftover=tblk.durationMin-placedMin;
+        if(leftover>0){
+          // Carry remainder forward
+          var cont={};for(var kk in tblk)cont[kk]=tblk[kk];
+          cont.durationMin=leftover;
+          nextRemaining.push(cont);
+        }
+      } else {
+        // Nothing fit today — carry entire task forward
+        nextRemaining.push(tblk);
+      }
+    }
+    remaining=nextRemaining;
+    if(remaining.length>0) curDate=nextWorkDate(curDate,s.skipWE,s.satOnly);
+  }
+
+  // Recompute session labels: for each task, number its blocks across all days in order
+  var allDays=[];
+  var dayKeys=Object.keys(dayMap).sort();
+  for(var k=0;k<dayKeys.length;k++) allDays.push(dayMap[dayKeys[k]]);
+  recomputeSessionLabels(allDays);
+
+  scheduledDays=allDays;
+  snapshotForUndo();
+  renderCalendar();
+}
+
+function renderCalendar(){
+  var days=scheduledDays;
+  if(!days||!days.length){
+    document.getElementById('calendarBody').innerHTML='<div class="empty-state"><div class="big-icon">&#128197;</div><p>Tasks fill from today. Unticked tasks roll over automatically at midnight.</p></div>';
+    return;
+  }
+  var s=getSettings();
+  var now=new Date();
+  var currentMin=now.getHours()*60+now.getMinutes();
+  var wrap=document.createElement('div');wrap.className='day-columns';
+  var totalBlocks=0;
+  for(var d=0;d<days.length;d++)totalBlocks+=days[d].blocks.length;
+
+  for(var d=0;d<days.length;d++){
+    (function(d){
+      var day=days[d];
+      var isToday=sameDay(day.date,now);
+      var isPast=day.date<new Date(now.getFullYear(),now.getMonth(),now.getDate());
+      var isWE=isWeekend(day.date);
+      var hasRolled=day.blocks.some(function(b){return b.rolledOver;});
+      var col=document.createElement('div');
+      col.className='day-col'+(isToday?' today':'')+(isPast?' past':'')+(isWE?' weekend':'');
+      var todayBadge=isToday?'<span class="today-badge">TODAY</span>':'';
+      var rolledBadge=hasRolled?'<span class="rolled-badge">+rolled</span>':'';
+      col.innerHTML='<div class="day-header"><div class="day-name-label">'+DAY_FULL[day.date.getDay()]+'</div><div class="day-date-label">'+MONTH[day.date.getMonth()]+' '+day.date.getDate()+', '+day.date.getFullYear()+todayBadge+rolledBadge+'</div></div>';
+      var slotsDiv=document.createElement('div');
+      slotsDiv.className='day-slots';slotsDiv.dataset.dayIdx=d;
+      var blocks=day.blocks.slice().sort(function(a,b){
+        // pastDue ghosts always render after active blocks
+        if(!!a.pastDue!==!!b.pastDue) return a.pastDue?1:-1;
+        return a.startMin-b.startMin;
+      });
+      var nowLineInserted=false,prevBlockEnd=s.ws,pastDividerInserted=false;
+
+      // Always render: breaks shown even on free days
+      if(blocks.length===0){
+        // Show all breaks, then free label
+        var freeDayBreaks=getBreaks();
+        for(var bi=0;bi<freeDayBreaks.length;bi++){
+          var brk=freeDayBreaks[bi];
+          if(brk.end<=s.ws||brk.start>=s.we) continue;
+          var lb0=document.createElement('div');lb0.className='break-block';
+          lb0.textContent='\u23F8 '+brk.label+' '+minToTime(brk.start)+' \u2013 '+minToTime(brk.end);
+          slotsDiv.appendChild(lb0);
+        }
+        var fl=document.createElement('div');fl.className='free-label';fl.textContent='free';slotsDiv.appendChild(fl);
+        if(isToday){var nl0=document.createElement('div');nl0.className='now-line';slotsDiv.insertBefore(nl0,slotsDiv.firstChild);}
+      } else {
+        // Build a unified timeline: merge task blocks and breaks into one sorted list,
+        // then render in order. This prevents pastDue ghosts from breaking break display.
+        var allBreaks=getBreaks();
+        // Build timeline items: {type:'block'|'break', start, ...}
+        var timeline=[];
+        for(var bi=0;bi<allBreaks.length;bi++){
+          var brk=allBreaks[bi];
+          if(brk.end<=s.ws||brk.start>=s.we) continue;
+          timeline.push({type:'break',start:brk.start,end:brk.end,label:brk.label});
+        }
+        // pastDue blocks render after active blocks — keep them at end
+        var activeBlocks=blocks.filter(function(b){return !b.pastDue;});
+        var pastDueBlocks=blocks.filter(function(b){return !!b.pastDue;});
+        for(var bi2=0;bi2<activeBlocks.length;bi2++){
+          var ab=activeBlocks[bi2];
+          timeline.push({type:'block',start:ab.startMin,block:ab});
+        }
+        // Sort by start time; breaks before blocks at same time
+        timeline.sort(function(a,b){
+          if(a.start!==b.start) return a.start-b.start;
+          return a.type==='break'?-1:1;
+        });
+        // De-duplicate breaks (same start/end)
+        var shownBreakKeys={};
+        for(var ti=0;ti<timeline.length;ti++){
+          var item=timeline[ti];
+          if(item.type==='break'){
+            var bkey=item.start+'-'+item.end;
+            if(shownBreakKeys[bkey]) continue;
+            shownBreakKeys[bkey]=true;
+            if(isToday&&!nowLineInserted&&currentMin<=item.start){
+              var nl=document.createElement('div');nl.className='now-line';slotsDiv.appendChild(nl);nowLineInserted=true;
+            }
+            var lb=document.createElement('div');lb.className='break-block';
+            lb.textContent='\u23F8 '+item.label+' '+minToTime(item.start)+' \u2013 '+minToTime(item.end);
+            slotsDiv.appendChild(lb);
+          } else {
+            var block=item.block;
+            if(isToday&&!nowLineInserted&&currentMin<=block.startMin){
+              var nl2=document.createElement('div');nl2.className='now-line';slotsDiv.appendChild(nl2);nowLineInserted=true;
+            }
+            var blkEl=createBlock(block,d,isToday,isPast,currentMin,s);
+            slotsDiv.appendChild(blkEl);
+          }
+        }
+        // Render pastDue ghosts after everything else
+        if(pastDueBlocks.length){
+          var pd=document.createElement('div');pd.className='pastdue-divider';
+          pd.textContent='\u23F1 earlier today \u2014 unfinished';
+          slotsDiv.appendChild(pd);
+          for(var pi=0;pi<pastDueBlocks.length;pi++){
+            if(completedTasks[String(pastDueBlocks[pi].taskId)]) continue;
+            var pdEl=createBlock(pastDueBlocks[pi],d,isToday,isPast,currentMin,s);
+            pdEl.classList.add('pastdue');
+            slotsDiv.appendChild(pdEl);
+          }
+        }
+        if(isToday&&!nowLineInserted){var nl3=document.createElement('div');nl3.className='now-line';slotsDiv.appendChild(nl3);}
+      }
+
+      slotsDiv.addEventListener('dragover',function(e){e.preventDefault();slotsDiv.style.background='rgba(200,240,110,.03)';});
+      slotsDiv.addEventListener('dragleave',function(){slotsDiv.style.background='';});
+      slotsDiv.addEventListener('drop',function(e){
+        e.preventDefault();slotsDiv.style.background='';
+        // Drop onto empty column space = insert task at END of this day (append mode).
+        if(!dragData||dragData.dayIdx===d)return;
+        snapshotForUndo();
+        var dragTaskId3=String(dragData.taskId);
+        var tgtDay=scheduledDays[d];
+        // Collect total mins and reference block
+        var dTotal3=0,dRef3=null;
+        for(var di=0;di<scheduledDays.length;di++){
+          for(var bi=0;bi<scheduledDays[di].blocks.length;bi++){
+            var bl3=scheduledDays[di].blocks[bi];
+            if(String(bl3.taskId)===dragTaskId3&&!bl3.pastDue){dTotal3+=bl3.durationMin;if(!dRef3)dRef3=bl3;}
+          }
+        }
+        if(!dRef3)return;
+        // Find last scheduled startMin on target day to append after
+        var lastMin3=0;
+        for(var bi2=0;bi2<tgtDay.blocks.length;bi2++){
+          var tbl3=tgtDay.blocks[bi2];
+          if(!tbl3.pastDue&&tbl3.startMin!==undefined) lastMin3=Math.max(lastMin3,tbl3.startMin+tbl3.durationMin);
+        }
+        // Remove from all days
+        for(var di2=0;di2<scheduledDays.length;di2++){
+          scheduledDays[di2].blocks=scheduledDays[di2].blocks.filter(function(b){return String(b.taskId)!==dragTaskId3||b.pastDue;});
+        }
+        // Insert at end of target day
+        var appBlk3={};for(var k3 in dRef3)appBlk3[k3]=dRef3[k3];
+        appBlk3.durationMin=dTotal3;appBlk3.order=lastMin3+1;
+        delete appBlk3.startMin;delete appBlk3.splitIdx;delete appBlk3.splitTotal;
+        tgtDay.blocks.push(appBlk3);
+        repackDay(tgtDay,s);
+        rebuildSchedule();
+        showInfo('"'+dRef3.taskName+'" moved to end of day.');saveState();
+      });
+
+      col.appendChild(slotsDiv);wrap.appendChild(col);
+    })(d);
+  }
+
+  var body=document.getElementById('calendarBody');
+  body.innerHTML='';body.appendChild(wrap);
+  document.getElementById('slotsInfo').textContent=totalBlocks+' sessions';
+  document.getElementById('spanInfo').textContent='across '+days.length+' day'+(days.length===1?'':'s');
+  checkAlerts();
+  setTimeout(function(){
+    var tc=document.querySelector('.day-col.today');
+    if(tc)tc.scrollIntoView({behavior:'smooth',block:'nearest',inline:'start'});
+  },60);
+}
+
+function createBlock(block,dayIdx,isToday,isPast,currentMin,s){
+  var el=document.createElement('div');
+  var isDone=!!completedTasks[String(block.taskId)];
+  el.className='time-block '+block.color+(isDone?' completed':'')+(block.rolledOver&&!isDone?' rolled-over':'');
+  el.draggable=!isDone;
+  el.dataset.dayIdx=dayIdx;
+  el.dataset.taskId=String(block.taskId);
+  el.dataset.session=String(block.session);
+  var endMin=block.startMin+block.durationMin;
+  var badge=block.totalSessions>1?'<div class="session-badge">day '+block.session+'/'+block.totalSessions+'</div>':'';
+  var resumeNote=(block.splitIdx>0&&block.splitIdx!==undefined)?'<div class="block-tag">resumed after break</div>':'';
+  var contNote=(block.totalSessions>1&&block.session>1&&!block.splitIdx)?'<div class="block-tag">cont\'d</div>':'';
+  var rolledNote=block.rolledOver?'<div class="block-tag">rolled from '+block.rolledFrom+'</div>':'';
+  var isActive=isToday&&!isDone&&currentMin>=block.startMin&&currentMin<endMin;
+  var durAttr=isActive?' data-endmin="'+endMin+'"':'';
+  var durText=isActive?fmtCountdown(endMin):block.durationMin+' min';
+  el.innerHTML=resumeNote+contNote+'<div class="block-time">'+minToTime(block.startMin)+' \u2013 '+minToTime(endMin)+'</div><div class="block-name">'+block.taskName+'</div><div class="block-dur"'+durAttr+'>'+durText+'</div>'+rolledNote+badge;
+
+  if(isToday&&!isDone){
+    if(isActive)el.classList.add('alert-active');
+    else if(currentMin<block.startMin&&block.startMin-currentMin<=15)el.classList.add('alert-upcoming');
+    else if(currentMin>=endMin)el.classList.add('alert-overdue');
+  }
+
+  el.addEventListener('dragstart',function(){
+    dragData={dayIdx:dayIdx,taskId:block.taskId,session:block.session};
+    setTimeout(function(){el.classList.add('dragging');},0);
+  });
+  el.addEventListener('dragend',function(){
+    el.classList.remove('dragging');dragData=null;
+    document.querySelectorAll('.time-block').forEach(function(b){b.classList.remove('drag-over-target');});
+  });
+  // ── Mobile tap-to-swap ──
+  // Short tap (< 300ms, no move) on a block enters swap-select mode.
+  // A second tap on a different block performs the swap.
+  var tapStart=0,tapMoved=false;
+  el.addEventListener('touchstart',function(e){tapStart=Date.now();tapMoved=false;},{passive:true});
+  el.addEventListener('touchmove',function(){tapMoved=true;},{passive:true});
+  el.addEventListener('touchend',function(e){
+    if(tapMoved||Date.now()-tapStart>350) return; // long-press or scroll — ignore
+    if(block.pastDue||completedTasks[String(block.taskId)]) return;
+    e.preventDefault();
+    if(!swapState){
+      // First tap: select this block
+      swapState={dayIdx:dayIdx,taskId:String(block.taskId),session:block.session,el:el};
+      el.classList.add('swap-selected');
+      var bar=document.getElementById('swapBar');
+      if(bar){bar.style.display='flex';document.getElementById('swapBarMsg').textContent='\u21a9 \u201c'+block.taskName+'\u201d \u2014 tap where to insert it';}
+    } else if(swapState.el===el){
+      // Tapped the same block — deselect
+      clearSwapState();
+    } else {
+      // Second tap: perform swap
+      performTapInsert(swapState,{dayIdx:dayIdx,taskId:String(block.taskId),session:block.session,el:el});
+    }
+  });
+  el.addEventListener('dragover',function(e){e.preventDefault();e.stopPropagation();el.classList.add('drag-over-target');});
+  el.addEventListener('dragleave',function(){el.classList.remove('drag-over-target');});
+  el.addEventListener('drop',function(e){
+    e.preventDefault();e.stopPropagation();el.classList.remove('drag-over-target');
+    if(!dragData)return;
+    var dragTaskId=String(dragData.taskId);
+    var targTaskId=String(el.dataset.taskId);
+    if(dragTaskId===targTaskId){dragData=null;return;}
+    var toDayIdx=parseInt(el.dataset.dayIdx);
+    var toDay=scheduledDays[toDayIdx];
+
+    // INSERT MODEL: drag task is lifted and inserted before the target task.
+    // rebuildSchedule() fills gaps left behind and handles overflow naturally.
+    snapshotForUndo();
+    var s2=getSettings();
+
+    // Collect total remaining minutes for dragged task and grab a reference block
+    var dragTotalMin=0;
+    var dragBlockRef=null;
+    for(var d2=0;d2<scheduledDays.length;d2++){
+      for(var b2=0;b2<scheduledDays[d2].blocks.length;b2++){
+        var bl2=scheduledDays[d2].blocks[b2];
+        if(String(bl2.taskId)===dragTaskId&&!bl2.pastDue){
+          dragTotalMin+=bl2.durationMin;
+          if(!dragBlockRef) dragBlockRef=bl2;
+        }
+      }
+    }
+    if(!dragBlockRef){dragData=null;return;}
+
+    // Capture target task's earliest startMin on toDay BEFORE removal
+    var targEarliest=9999;
+    for(var b3=0;b3<toDay.blocks.length;b3++){
+      var tb3=toDay.blocks[b3];
+      if(String(tb3.taskId)===targTaskId&&tb3.startMin!==undefined&&tb3.startMin<targEarliest){
+        targEarliest=tb3.startMin;
+      }
+    }
+    if(targEarliest===9999) targEarliest=480;
+
+    // Remove ALL segments of dragged task from every day
+    for(var d3=0;d3<scheduledDays.length;d3++){
+      scheduledDays[d3].blocks=scheduledDays[d3].blocks.filter(function(b){
+        return String(b.taskId)!==dragTaskId||b.pastDue;
+      });
+    }
+
+    // Build a fresh single block and insert into toDay just before target
+    var insertBlk={};
+    for(var k2 in dragBlockRef) insertBlk[k2]=dragBlockRef[k2];
+    insertBlk.durationMin=dragTotalMin;
+    insertBlk.order=targEarliest-0.5;
+    delete insertBlk.startMin;delete insertBlk.splitIdx;delete insertBlk.splitTotal;
+    toDay.blocks.push(insertBlk);
+
+    // Single clean rebuild — no repackDay first to avoid double-repack corruption
+    rebuildSchedule();
+    showInfo('"'+dragBlockRef.taskName+'" inserted — schedule repacked.');
+    saveState();
+    dragData=null;
+  });
+
+  el.addEventListener('mouseenter',function(e){
+    var tt=document.getElementById('tooltip');
+    tt.textContent=block.taskName+(block.totalSessions>1?' ('+block.session+'/'+block.totalSessions+')':'')+' \u00b7 '+block.durationMin+' min'+(block.rolledOver?' \u00b7 rolled from '+block.rolledFrom:'')+(isDone?' \u00b7 done':'');
+    tt.style.display='block';moveTip(e);
+  });
+  el.addEventListener('mousemove',moveTip);
+  el.addEventListener('mouseleave',function(){document.getElementById('tooltip').style.display='none';});
+  function moveTip(e){var tt=document.getElementById('tooltip');tt.style.left=(e.pageX+12)+'px';tt.style.top=(e.pageY-8)+'px';}
+  return el;
+}
+
+function checkAlerts(){
+  if(!scheduledDays.length)return;
+  var now=new Date();
+  var currentMin=now.getHours()*60+now.getMinutes();
+  for(var d=0;d<scheduledDays.length;d++){
+    var day=scheduledDays[d];
+    if(!sameDay(day.date,now))continue;
+    for(var b=0;b<day.blocks.length;b++){
+      var block=day.blocks[b];
+      if(completedTasks[String(block.taskId)])continue;
+      var key=block.taskId+'-'+block.session;
+      if(currentMin>=block.startMin&&currentMin<block.startMin+block.durationMin){
+        if(!alertedTasks[key]){alertedTasks[key]=true;playAlert();}
+      }
+    }
+  }
+}
+
+function liveRepack(){
+  // Called every minute. Splits today's blocks into:
+  //   - pastDue: time elapsed, not done, not completed → ghost below divider
+  //   - active: still schedulable → repack from now
+  if(!scheduledDays.length) return;
+  var now=new Date();
+  var s=getSettings();
+  var repacked=false;
+  for(var d=0;d<scheduledDays.length;d++){
+    var day=scheduledDays[d];
+    if(!sameDay(day.date,now)) continue;
+    var nowMin=now.getHours()*60+now.getMinutes();
+    var needsRepack=false;
+    for(var b=0;b<day.blocks.length;b++){
+      var blk=day.blocks[b];
+      if(completedTasks[String(blk.taskId)]) continue;
+      if(blk.pastDue) continue; // already ghosted
+      if(blk.startMin+blk.durationMin<=nowMin){
+        needsRepack=true; break;
+      }
+    }
+    if(needsRepack){
+      // Mark elapsed incomplete blocks as pastDue ghosts instead of removing them
+      for(var b=0;b<day.blocks.length;b++){
+        var blk=day.blocks[b];
+        if(completedTasks[String(blk.taskId)]) continue;
+        if(blk.pastDue) continue;
+        if(blk.startMin+blk.durationMin<=nowMin){
+          blk.pastDue=true;
+        }
+      }
+      repackDay(day,s); // repack only non-pastDue blocks
+      repacked=true;
+    }
+    break;
+  }
+  if(repacked) renderCalendar();
+}
+
+function showSwapError(msg){
+  // Show error in swap bar (visible on mobile schedule view) AND infoBar
+  var bar=document.getElementById('swapBar');
+  var msgEl=document.getElementById('swapBarMsg');
+  if(bar&&msgEl){
+    bar.style.display='flex';
+    bar.style.borderColor='var(--danger)';
+    msgEl.style.color='var(--danger)';
+    msgEl.textContent='\u26a0 '+msg;
+    setTimeout(function(){
+      bar.style.borderColor='var(--accent)';
+      msgEl.style.color='var(--accent)';
+      bar.style.display='none';
+    },3000);
+  }
+  showInfo(msg,'warn');
+}
+
+function showInfo(msg,type){
+  var bar=document.getElementById('infoBar');
+  bar.textContent=msg;bar.style.display='block';
+  bar.style.color=type==='warn'?'var(--accent3)':'var(--accent)';
+  bar.style.borderColor=type==='warn'?'rgba(240,160,110,.3)':'rgba(200,240,110,.2)';
+  bar.style.background=type==='warn'?'rgba(240,160,110,.06)':'rgba(200,240,110,.06)';
+  setTimeout(function(){bar.style.display='none';},3500);
+}
+
+function togglePanel(id){
+  var panel=document.getElementById(id);
+  if(!panel) return;
+  var header=panel.querySelector('.panel-header');
+  var body=panel.querySelector('.panel-body');
+  if(!header||!body) return;
+  var isHidden=body.classList.contains('hidden');
+  body.classList.toggle('hidden',!isHidden);
+  header.classList.toggle('collapsed',!isHidden);
+}
+
+function collapsePanel(id){
+  var panel=document.getElementById(id);
+  if(!panel) return;
+  var header=panel.querySelector('.panel-header');
+  var body=panel.querySelector('.panel-body');
+  if(!header||!body) return;
+  body.classList.add('hidden');
+  header.classList.add('collapsed');
+}
+
+function expandPanel(id){
+  var panel=document.getElementById(id);
+  if(!panel) return;
+  var header=panel.querySelector('.panel-header');
+  var body=panel.querySelector('.panel-body');
+  if(!header||!body) return;
+  body.classList.remove('hidden');
+  header.classList.remove('collapsed');
+}
+
+// ── Drawer (mobile menu) ────────────────────────────────────────────────────
+function openDrawer(){
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawerOverlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeDrawer(){
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawerOverlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+
+function clearSwapState(){
+  if(swapState&&swapState.el) swapState.el.classList.remove('swap-selected');
+  swapState=null;
+  var bar=document.getElementById('swapBar');
+  if(bar) bar.style.display='none';
+}
+
+function performTapInsert(from,to){
+  // INSERT MODEL: "from" task is lifted and inserted immediately BEFORE "to" task.
+  // Everything else shifts naturally via rebuildSchedule().
+  var s=getSettings();
+  var fromDay=scheduledDays[from.dayIdx];
+  var toDay=scheduledDays[to.dayIdx];
+  if(!fromDay||!toDay){clearSwapState();return;}
+
+  // Find a representative block for each task
+  var fromBlock=null;
+  for(var i=0;i<fromDay.blocks.length;i++){
+    if(String(fromDay.blocks[i].taskId)===from.taskId){fromBlock=fromDay.blocks[i];break;}
+  }
+  var toBlock=null;
+  for(var i=0;i<toDay.blocks.length;i++){
+    if(String(toDay.blocks[i].taskId)===to.taskId){toBlock=toDay.blocks[i];break;}
+  }
+  if(!fromBlock||!toBlock){clearSwapState();return;}
+
+  var now=new Date();
+  var nowMin=now.getHours()*60+now.getMinutes();
+  if(completedTasks[String(fromBlock.taskId)]){
+    showSwapError('"'+fromBlock.taskName+'" is already completed.');
+    clearSwapState();return;
+  }
+  if(completedTasks[String(toBlock.taskId)]){
+    showSwapError('"'+toBlock.taskName+'" is completed - cannot insert before it.');
+    clearSwapState();return;
+  }
+  var todayStart=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  if(fromDay.date<todayStart||toDay.date<todayStart){
+    showSwapError("Can't move tasks in the past.");
+    clearSwapState();return;
+  }
+  if(from.taskId===to.taskId){
+    showSwapError('Select a different task to insert before.');
+    clearSwapState();return;
+  }
+  if(sameDay(fromDay.date,now)&&fromBlock.startMin!==undefined&&nowMin>=fromBlock.startMin&&nowMin<fromBlock.startMin+fromBlock.durationMin){
+    showSwapError('"'+fromBlock.taskName+'" is currently in progress.');
+    clearSwapState();return;
+  }
+
+  snapshotForUndo();
+
+  var fromTaskId=from.taskId;
+  var toTaskId=to.taskId;
+
+  // Collect total remaining minutes for "from" task across all days
+  var fromTotalMin=0;
+  for(var d=0;d<scheduledDays.length;d++){
+    for(var b=0;b<scheduledDays[d].blocks.length;b++){
+      var bl=scheduledDays[d].blocks[b];
+      if(String(bl.taskId)===fromTaskId&&!bl.pastDue) fromTotalMin+=bl.durationMin;
+    }
+  }
+  if(!fromTotalMin) fromTotalMin=Math.round(fromBlock.durationMin||60);
+
+  // Find "to" task's earliest startMin BEFORE removing anything
+  // — this is the target slot position the inserted task should land at
+  var toEarliest=9999;
+  for(var b=0;b<toDay.blocks.length;b++){
+    var tb=toDay.blocks[b];
+    if(String(tb.taskId)===toTaskId&&tb.startMin!==undefined&&tb.startMin<toEarliest){
+      toEarliest=tb.startMin;
+    }
+  }
+  if(toEarliest===9999) toEarliest=480;
+
+  // Remove ALL segments of "from" task from every day
+  for(var d=0;d<scheduledDays.length;d++){
+    scheduledDays[d].blocks=scheduledDays[d].blocks.filter(function(b){
+      return String(b.taskId)!==fromTaskId||b.pastDue;
+    });
+  }
+
+  // Build a single consolidated block for the inserted task and place on toDay
+  var insertBlock={};
+  for(var k in fromBlock) insertBlock[k]=fromBlock[k];
+  insertBlock.durationMin=fromTotalMin;
+  insertBlock.order=toEarliest-0.5; // sorts immediately before toTask
+  delete insertBlock.startMin;delete insertBlock.splitIdx;delete insertBlock.splitTotal;
+  toDay.blocks.push(insertBlock);
+
+  // Single clean repack — rebuildSchedule handles ALL days in one pass,
+  // filling gaps on other days and carrying overflow forward correctly.
+  // Do NOT call repackDay first; that causes a double-repack that corrupts order.
+  rebuildSchedule();
+  showInfo('"'+fromBlock.taskName+'" inserted before "'+toBlock.taskName+'".');
+  saveState();
+  clearSwapState();
+}
+
+
+// Wire swap cancel button
+document.addEventListener('DOMContentLoaded',function(){
+  var cb=document.getElementById('swapCancelBtn');
+  if(cb) cb.addEventListener('click',clearSwapState);
+  // Also cancel on Escape
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')clearSwapState();});
+});
+
+// Wire menu button with both touch and click for maximum mobile compatibility
+(function(){
+  function initDrawerEvents(){
+    var btn=document.getElementById('menuBtn');
+    var overlay=document.getElementById('drawerOverlay');
+    var closeBtn=document.getElementById('drawerClose');
+    if(btn){
+      btn.addEventListener('click',function(e){e.stopPropagation();openDrawer();});
+      btn.addEventListener('touchend',function(e){e.preventDefault();e.stopPropagation();openDrawer();});
+    }
+    if(overlay){
+      overlay.addEventListener('click',closeDrawer);
+      overlay.addEventListener('touchend',function(e){e.preventDefault();closeDrawer();});
+    }
+    if(closeBtn){
+      closeBtn.addEventListener('click',closeDrawer);
+      closeBtn.addEventListener('touchend',function(e){e.preventDefault();closeDrawer();});
+    }
+    // Wire drawer tabs via JS (no inline onclick — unreliable on Android WebView)
+    document.querySelectorAll('.drawer-tab').forEach(function(tab){
+      function activate(e){
+        e.preventDefault();
+        e.stopPropagation();
+        switchTab(tab.getAttribute('data-tab'));
+      }
+      tab.addEventListener('click', activate);
+      tab.addEventListener('touchend', activate);
+    });
+  }
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',initDrawerEvents);
+  } else {
+    initDrawerEvents();
+  }
+})();
+function switchTab(name){
+  document.querySelectorAll('.drawer-tab').forEach(function(t,i){
+    var names=['tasks','breaks','settings','sync'];
+    t.classList.toggle('active',names[i]===name);
+  });
+  document.querySelectorAll('.drawer-section').forEach(function(s){
+    s.classList.toggle('active',s.id==='dtab-'+name);
+  });
+}
+
+// Wire desktop-only task/break/generate buttons to same functions as drawer
+function initDesktopPanels(){
+  var addTaskD=document.getElementById('addTaskBtnDesktop');
+  if(addTaskD) addTaskD.addEventListener('click',function(){
+    addTaskRowDesktop();
+    // Mirror into drawer
+    var rows=document.querySelectorAll('#taskListDesktop .task-row');
+    if(rows.length){
+      var last=rows[rows.length-1];
+      var tid=last.dataset.id;
+      var n=last.querySelector('.task-name-inp').value;
+      var d=last.querySelector('.task-dur-inp').value;
+      if(!document.querySelector('#taskList .task-row[data-id="'+tid+'"]')){
+        addTaskRow(n,d,tid);
+      }
+    }
+  });
+  var addBreakD=document.getElementById('addBreakBtnDesktop');
+  if(addBreakD) addBreakD.addEventListener('click',function(){
+    addBreakRowDesktop();
+    syncBreaksToDrawer();
+    triggerAutoSchedule();debouncedSave();
+  });
+  var genD=document.getElementById('generateBtnDesktop');
+  if(genD) genD.addEventListener('click',generateSchedule);
+
+  // Wire desktop settings inputs → canonical inputs
+  ['workStartD','workEndD','blockSizeD','skipWeekendsD','soundAlertsD'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(!el) return;
+    el.addEventListener('change',function(){
+      var mainId=id.replace(/D$/,'');
+      var main=document.getElementById(mainId);
+      if(!main) return;
+      if(el.type==='checkbox') main.checked=el.checked;
+      else main.value=el.value;
+      triggerAutoSchedule();debouncedSave();
+    });
+  });
+
+  // Desktop task/break list mirrors (desktop uses separate DOM containers)
+  var tld=document.getElementById('taskListDesktop');
+  if(tld) tld.addEventListener('input',function(e){
+    if(e.target&&e.target.classList.contains('task-dur-inp')) triggerAutoSchedule();
+    debouncedSave();
+  });
+  var bld=document.getElementById('breakListDesktop');
+  if(bld){
+    bld.addEventListener('input',function(){triggerAutoSchedule();debouncedSave();});
+    bld.addEventListener('change',function(){triggerAutoSchedule();debouncedSave();});
+  }
+}
+
+// addTaskRow and addBreakRow for the desktop column
+function addTaskRowDesktop(name,dur,id){
+  var list=document.getElementById('taskListDesktop');
+  if(!list) return;
+  if(!id){taskIdCounter++;id=taskIdCounter;}
+  var row=document.createElement('div');row.className='task-row';row.dataset.id=id;
+  var cb=document.createElement('input');cb.type='checkbox';cb.className='task-complete';
+  if(completedTasks[String(id)])cb.checked=true;
+  cb.addEventListener('change',function(){
+    var s=getSettings();
+    if(cb.checked){completedTasks[String(id)]=true;}else{delete completedTasks[String(id)];}
+    if(scheduledDays.length){for(var d=0;d<scheduledDays.length;d++){repackDay(scheduledDays[d],s);}renderCalendar();}
+    debouncedSave();
+  });
+  var ni=document.createElement('input');ni.type='text';ni.placeholder='Task name';ni.value=name||'';ni.className='task-name-inp';
+  var di=document.createElement('input');di.type='number';di.placeholder='hrs';di.min='0.25';di.max='999';di.step='0.25';di.value=dur||'';di.className='dur-input task-dur-inp';
+  di.addEventListener('blur',function(){
+    var v=parseFloat(di.value);
+    if(isNaN(v)||v<=0){di.value='';return;}
+    di.value=Math.round(v/0.25)*0.25;
+    if(ni.value.trim()&&di.value) triggerAutoSchedule();
+  });
+  var rb=document.createElement('button');rb.className='remove-btn';rb.innerHTML='&times;';
+  rb.addEventListener('click',function(){delete completedTasks[String(id)];row.remove();triggerAutoSchedule();debouncedSave();});
+  row.appendChild(cb);row.appendChild(ni);row.appendChild(di);row.appendChild(rb);
+  list.appendChild(row);ni.focus();
+  ni.addEventListener('blur',function(){
+    // Only schedule if both name AND duration filled, and focus moved outside the row
+    setTimeout(function(){
+      var active=document.activeElement;
+      var stillInRow=row.contains(active);
+      if(!stillInRow&&ni.value.trim()&&parseFloat(di.value)>0) triggerAutoSchedule();
+    },150);
+  });
+  var gbd=document.getElementById('generateBtnDesktop');
+  if(gbd) gbd.style.display='block';
+}
+function addBreakRowDesktop(label,time,dur,enabled){
+  var list=document.getElementById('breakListDesktop');
+  if(!list) return;
+  var row=document.createElement('div');row.className='break-row';row.style.cssText='display:grid;grid-template-columns:auto 1fr 60px 60px 26px;gap:5px;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 7px';
+  var en=document.createElement('input');en.type='checkbox';en.className='break-enabled';en.checked=(enabled!==false);en.style='accent-color:var(--accent3);width:14px;height:14px';
+  var li=document.createElement('input');li.type='text';li.className='break-label';li.placeholder='Break name';li.value=label||'';li.style='background:var(--surface3);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:\'DM Mono\',monospace;font-size:12px;padding:4px 6px;outline:none;width:100%';
+  var ti=document.createElement('input');ti.type='time';ti.className='break-time';ti.value=time||'12:00';ti.style='background:var(--surface3);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:\'DM Mono\',monospace;font-size:12px;padding:4px 6px;outline:none;width:100%';
+  var di=document.createElement('input');di.type='number';di.className='break-dur';di.placeholder='min';di.min='5';di.max='480';di.step='5';di.value=dur||60;di.style='background:var(--surface3);border:1px solid var(--border);border-radius:4px;color:var(--accent3);font-family:\'DM Mono\',monospace;font-size:12px;padding:4px 6px;outline:none;text-align:center;width:100%';
+  var rb=document.createElement('button');rb.className='remove-btn';rb.innerHTML='&times;';
+  rb.addEventListener('click',function(){row.remove();triggerAutoSchedule();debouncedSave();});
+  row.appendChild(en);row.appendChild(li);row.appendChild(ti);row.appendChild(di);row.appendChild(rb);
+  list.appendChild(row);
+}
+
+function initPanelStates(){
+  initDesktopPanels();
+  // Wire undo/redo buttons
+  var ub=document.getElementById('undoBtn'),rb=document.getElementById('redoBtn');
+  if(ub){
+    ub.addEventListener('click',undoAction);
+    ub.addEventListener('touchend',function(e){e.preventDefault();undoAction();});
+  }
+  if(rb){
+    rb.addEventListener('click',redoAction);
+    rb.addEventListener('touchend',function(e){e.preventDefault();redoAction();});
+  }
+  updateUndoButtons();
+}
+
+function fmtCountdown(endMin){
+  var now=new Date();
+  var nowSec=now.getHours()*3600+now.getMinutes()*60+now.getSeconds();
+  var endSec=endMin*60;
+  var rem=endSec-nowSec;
+  if(rem<=0) return '0:00 left';
+  var m=Math.floor(rem/60),s=rem%60;
+  return m+':'+(s<10?'0':'')+s+' left';
+}
+
+function updateCountdowns(){
+  var els=document.querySelectorAll('.block-dur[data-endmin]');
+  var now=new Date();
+  var nowSec=now.getHours()*3600+now.getMinutes()*60+now.getSeconds();
+  for(var i=0;i<els.length;i++){
+    var endMin=parseInt(els[i].getAttribute('data-endmin'));
+    var endSec=endMin*60;
+    var rem=endSec-nowSec;
+    if(rem<=0){
+      els[i].textContent='0:00 left';
+    } else {
+      var m=Math.floor(rem/60),s=rem%60;
+      els[i].textContent=m+':'+(s<10?'0':'')+s+' left';
+    }
+  }
+}
+
+function updateClock(){document.getElementById('clock').textContent=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
+
+setInterval(function(){updateClock();updateCountdowns();},1000);
+setInterval(checkAlerts,30000);
+setInterval(checkDayRollover,60000);
+setInterval(liveRepack,60000); // auto-shift overdue tasks every minute
+updateClock();
+
+function addBreakRow(label,timeVal,durMin,enabledVal){
+  var list=document.getElementById('breakList');
+  var row=document.createElement('div');
+  row.className='break-row';
+  row.style.cssText='display:grid;grid-template-columns:16px 1fr 72px 60px 26px;gap:5px;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 7px';
+
+  // enabled checkbox
+  var cb=document.createElement('input');cb.type='checkbox';cb.className='break-enabled';cb.checked=(enabledVal===undefined||enabledVal===true||enabledVal==='true');cb.style.cssText='width:13px;height:13px;accent-color:var(--accent3);flex-shrink:0;cursor:pointer';
+
+  // label input
+  var li=document.createElement('input');li.type='text';li.className='break-label';li.value=label||'Break';li.placeholder='Label';
+  li.style.cssText='background:var(--surface3);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:\'DM Mono\',monospace;font-size:12px;padding:4px 6px;outline:none;width:100%';
+
+  // time input
+  var ti=document.createElement('input');ti.type='time';ti.className='break-time';ti.value=timeVal||'10:00';
+  ti.style.cssText='background:var(--surface3);border:1px solid var(--border);border-radius:4px;color:var(--accent3);font-family:\'DM Mono\',monospace;font-size:12px;padding:4px 5px;outline:none;width:100%';
+
+  // duration select
+  var ds=document.createElement('select');ds.className='break-dur';
+  ds.style.cssText='background:var(--surface3);border:1px solid var(--border);border-radius:4px;color:var(--accent3);font-family:\'DM Mono\',monospace;font-size:12px;padding:4px 5px;outline:none;width:100%';
+  [['15','15 min'],['30','30 min'],['45','45 min'],['60','1 hr'],['90','1.5 hr']].forEach(function(opt){
+    var o=document.createElement('option');o.value=opt[0];o.textContent=opt[1];
+    if(parseInt(opt[0])===durMin)o.selected=true;
+    ds.appendChild(o);
+  });
+
+  // remove button
+  var rb=document.createElement('button');rb.innerHTML='&times;';
+  rb.style.cssText='background:none;border:1px solid var(--border);border-radius:5px;color:var(--muted);cursor:pointer;font-size:15px;height:26px;width:26px;display:flex;align-items:center;justify-content:center';
+  rb.onmouseenter=function(){rb.style.borderColor='var(--danger)';rb.style.color='var(--danger)';};
+  rb.onmouseleave=function(){rb.style.borderColor='var(--border)';rb.style.color='var(--muted)';};
+  rb.addEventListener('click',function(){row.remove();triggerAutoSchedule();debouncedSave();});
+
+  row.appendChild(cb);row.appendChild(li);row.appendChild(ti);row.appendChild(ds);row.appendChild(rb);
+  list.appendChild(row);
+}
+
+document.getElementById('addBreakBtn').addEventListener('click',function(){
+  addBreakRow('Break','09:00',30);
+  syncBreaksToDesktop();
+  var rows=document.querySelectorAll('#breakList .break-row');
+  if(rows.length) rows[rows.length-1].scrollIntoView({behavior:'smooth',block:'nearest'});
+  triggerAutoSchedule();saveState();
+});
+
+document.getElementById('addTaskBtn').addEventListener('click',function(){
+  addTaskRow();
+  // Mirror the new row into the desktop panel
+  var rows=document.querySelectorAll('#taskList .task-row');
+  if(rows.length){
+    var last=rows[rows.length-1];
+    var tid=last.dataset.id;
+    var n=last.querySelector('.task-name-inp').value;
+    var d=last.querySelector('.task-dur-inp').value;
+    // Only add desktop mirror if not already there
+    if(!document.querySelector('#taskListDesktop .task-row[data-id="'+tid+'"]')){
+      addTaskRowDesktop(n,d,tid);
+    }
+  }
+});
+document.getElementById('generateBtn').addEventListener('click',generateSchedule);
+
+// ── Persistence: localStorage (offline cache) + Supabase (real-time sync) ──
+var STORAGE_KEY='weekflow_v1';
+var saveTimer=null;
+var syncStatus='idle';
+
+function setSyncUI(status,msg){
+  syncStatus=status;
+  var el=document.getElementById('syncStatus');
+  if(!el) return;
+  var icons={idle:'☁',saving:'↑',loading:'↓',error:'⚠',ok:'✓',off:'○',live:'●'};
+  var colors={idle:'var(--muted)',saving:'var(--accent3)',loading:'var(--accent2)',error:'var(--danger)',ok:'var(--accent)',off:'var(--muted)',live:'var(--accent)'};
+  el.textContent=(icons[status]||'?')+' '+(msg||status);
+  el.style.color=colors[status]||'var(--muted)';
+}
+
+// ── Collect current state into a plain object ──────────────────────────────
+function collectState(){
+  function gv(a,b){var e=document.getElementById(a);if(e&&e.value)return e.value;var f=document.getElementById(b);return f?f.value:'';}
+  function gc(a,b){var e=document.getElementById(a)||document.getElementById(b);return e?e.checked:true;}
+  var settings={
+    workStart:gv('workStartD','workStart')||'08:00',
+    workEnd:gv('workEndD','workEnd')||'17:00',
+    blockSize:gv('blockSizeD','blockSize')||'60',
+    skipWeekends:gv('skipWeekendsD','skipWeekends')||'1',
+    soundAlerts:gc('soundAlertsD','soundAlerts'),
+    sbUrl:document.getElementById('sbUrl')?document.getElementById('sbUrl').value:'',
+    sbKey:document.getElementById('sbKey')?document.getElementById('sbKey').value:''
+  };
+  var tasks=[];
+  var seenIds={};
+  document.querySelectorAll('.task-row').forEach(function(r){
+    var tid=r.dataset.id;
+    if(seenIds[tid]) return;
+    seenIds[tid]=true;
+    var n=r.querySelector('.task-name-inp').value;
+    var d=r.querySelector('.task-dur-inp').value;
+    if(n&&n.trim()) tasks.push({id:tid,name:n,dur:d,done:!!completedTasks[tid]});
+  });
+  var breaks=[];
+  collectBreakData().forEach(function(b){
+    breaks.push({label:b.label,time:b.time,dur:String(b.dur),enabled:b.enabled});
+  });
+  var schedule=scheduledDays.map(function(day){
+    return{date:day.date.toISOString(),blocks:day.blocks};
+  });
+  return{settings:settings,tasks:tasks,breaks:breaks,completedTasks:completedTasks,
+    schedule:schedule,taskIdCounter:taskIdCounter,savedAt:Date.now()};
+}
+
+// ── Apply a state object to the UI ─────────────────────────────────────────
+function applyState(data){
+  if(data.settings){
+    var s=data.settings;
+    function sv(id,v){var e=document.getElementById(id);if(e&&v!==undefined&&v!=='')e.value=v;}
+    sv('workStart',s.workStart);sv('workStartD',s.workStart);
+    sv('workEnd',s.workEnd);sv('workEndD',s.workEnd);
+    sv('blockSize',s.blockSize);sv('blockSizeD',s.blockSize);
+    sv('skipWeekends',s.skipWeekends);sv('skipWeekendsD',s.skipWeekends);
+    if(s.soundAlerts!==undefined){var sa=document.getElementById('soundAlerts');if(sa)sa.checked=s.soundAlerts;var sad=document.getElementById('soundAlertsD');if(sad)sad.checked=s.soundAlerts;}
+    if(s.sbUrl!==undefined && document.getElementById('sbUrl')) document.getElementById('sbUrl').value=s.sbUrl;
+    if(s.sbKey!==undefined && document.getElementById('sbKey')) document.getElementById('sbKey').value=s.sbKey;
+  }
+  if(data.completedTasks) completedTasks=data.completedTasks;
+  if(data.taskIdCounter) taskIdCounter=data.taskIdCounter;
+  if(data.tasks&&data.tasks.length){
+    // Clear both panels first to avoid stale rows
+    var tl=document.getElementById('taskList');if(tl)tl.innerHTML='';
+    var tld=document.getElementById('taskListDesktop');if(tld)tld.innerHTML='';
+    data.tasks.forEach(function(t){
+      if(!t.name||!t.name.trim()) return; // skip blank entries
+      // Add to drawer (canonical)
+      addTaskRow(t.name,t.dur,t.id);
+      // Mirror to desktop panel
+      addTaskRowDesktop(t.name,t.dur,t.id);
+      if(t.done){
+        completedTasks[String(t.id)]=true;
+        // Mark both copies done
+        document.querySelectorAll('.task-row[data-id="'+t.id+'"]').forEach(function(row){
+          row.classList.add('completed');
+          var cb=row.querySelector('.task-complete');if(cb)cb.checked=true;
+        });
+      }
+    });
+  }
+  if(data.breaks&&data.breaks.length){
+    // Clear both lists first
+    var bl=document.getElementById('breakList');if(bl)bl.innerHTML='';
+    var bld=document.getElementById('breakListDesktop');if(bld)bld.innerHTML='';
+    data.breaks.forEach(function(b){
+      addBreakRow(b.label,b.time,parseInt(b.dur),b.enabled);
+      addBreakRowDesktop(b.label,b.time,parseInt(b.dur),b.enabled);
+    });
+  }
+  if(data.schedule&&data.schedule.length){
+    scheduledDays=data.schedule.map(function(d){return{date:new Date(d.date),blocks:d.blocks};});
+    recomputeSessionLabels(scheduledDays);
+    renderCalendar();
+  }
+}
+
+// ── localStorage layer (instant, works offline, PRIMARY cache) ────────────
+function saveLocal(data){
+  try{localStorage.setItem(STORAGE_KEY,JSON.stringify(data));}
+  catch(e){console.warn('Local save failed',e);}
+}
+function loadLocal(){
+  try{var r=localStorage.getItem(STORAGE_KEY);return r?JSON.parse(r):null;}
+  catch(e){return null;}
+}
+
+// ── Supabase layer (pure REST fetch — no SDK, no WebWorkers, no DataCloneError) ──
+var SB_TABLE='weekflow_state';
+var SB_DEVICE_ID=(function(){
+  try{
+    var id=localStorage.getItem('weekflow_device_id');
+    if(!id){id='dev_'+Math.random().toString(36).substr(2,9);localStorage.setItem('weekflow_device_id',id);}
+    return id;
+  }catch(e){return 'dev_'+Math.random().toString(36).substr(2,9);}
+})();
+var sbPollTimer=null;
+var lastRemoteSavedAt=0;
+
+function getSbConfig(){
+  return{
+    url:(document.getElementById('sbUrl')?document.getElementById('sbUrl').value.trim():''),
+    key:(document.getElementById('sbKey')?document.getElementById('sbKey').value.trim():'')
+  };
+}
+function hasSbConfig(){var c=getSbConfig();return !!(c.url&&c.key);}
+
+function sbFetch(path,method,body){
+  var c=getSbConfig();
+  var opts={method:method||'GET',headers:{
+    'apikey':c.key,
+    'Authorization':'Bearer '+c.key,
+    'Content-Type':'application/json',
+    'Prefer':'resolution=merge-duplicates,return=minimal'
+  }};
+  if(body) opts.body=JSON.stringify(body);
+  return fetch(c.url+'/rest/v1/'+path,opts);
+}
+
+function saveToSupabase(data){
+  if(!hasSbConfig()) return Promise.resolve(null);
+  data.device_id=SB_DEVICE_ID;
+  data.saved_at=Date.now();
+  setSyncUI('saving','Syncing...');
+  return sbFetch(SB_TABLE,'POST',{id:1,state:JSON.stringify(data),device_id:SB_DEVICE_ID,saved_at:data.saved_at})
+    .then(function(r){
+      if(!r.ok) return r.text().then(function(t){throw new Error(t);});
+      setSyncUI('live','Live sync on');
+      lastRemoteSavedAt=data.saved_at;
+      return true;
+    }).catch(function(e){
+      var msg=(e&&e.message)?e.message:String(e);
+      if(msg.indexOf('does not exist')!==-1||msg.indexOf('relation')!==-1){
+        setSyncUI('error','Run SQL setup first');
+      } else {
+        setSyncUI('error','Sync failed');
+        setTimeout(function(){if(hasSbConfig())setSyncUI('live','Live sync on');},4000);
+      }
+      console.warn('Supabase save failed:',msg);
+      return null;
+    });
+}
+
+function loadFromSupabase(){
+  if(!hasSbConfig()) return Promise.resolve(null);
+  setSyncUI('loading','Loading from cloud...');
+  return sbFetch(SB_TABLE+'?id=eq.1&select=state,device_id,saved_at')
+    .then(function(r){
+      if(!r.ok) return r.text().then(function(t){throw new Error(t);});
+      return r.json();
+    }).then(function(rows){
+      if(!rows||!rows.length) return null;
+      if(!rows[0].state) return null;
+      var data=JSON.parse(rows[0].state);
+      lastRemoteSavedAt=rows[0].saved_at||0;
+      setSyncUI('live','Live sync on');
+      return data;
+    }).catch(function(e){
+      var msg=(e&&e.message)?e.message:String(e);
+      if(msg.indexOf('does not exist')!==-1||msg.indexOf('relation')!==-1){
+        setSyncUI('error','Run SQL setup first');
+        console.warn('Supabase: table missing — run the SQL in the panel.');
+      } else {
+        setSyncUI('error','Cloud load failed');
+        console.warn('Supabase load failed:',msg);
+      }
+      return null;
+    });
+}
+
+// Poll every 15s for changes from other devices (pure REST, no WebSocket needed)
+function startPolling(){
+  if(sbPollTimer) return;
+  if(window.location.protocol==='file:') return; // blocked on file://
+  sbPollTimer=setInterval(function(){
+    if(!hasSbConfig()) return;
+    sbFetch(SB_TABLE+'?id=eq.1&select=saved_at,device_id')
+      .then(function(r){return r.json();})
+      .then(function(rows){
+        if(!rows||!rows.length) return;
+        var remoteTime=rows[0].saved_at||0;
+        var remoteDevice=rows[0].device_id||'';
+        if(remoteTime>lastRemoteSavedAt&&remoteDevice!==SB_DEVICE_ID){
+          loadFromSupabase().then(function(data){
+            if(!data||data.cleared) return;
+            document.getElementById('taskList').innerHTML='';
+            document.getElementById('breakList').innerHTML='';
+            scheduledDays=[];completedTasks={};taskIdCounter=0;
+            applyState(data);
+            saveLocal(data);
+            liveRepackImmediate();
+            showInfo('Updated from another device!','ok');
+          });
+        }
+      }).catch(function(){});
+  },15000);
+}
+
+function stopPolling(){
+  if(sbPollTimer){clearInterval(sbPollTimer);sbPollTimer=null;}
+}
+
+// ── Unified save: local immediately, Supabase debounced ────────────────────
+var sbSaveTimer=null;
+function saveState(){
+  var data=collectState();
+  saveLocal(data);
+  if(hasSbConfig()){
+    clearTimeout(sbSaveTimer);
+    sbSaveTimer=setTimeout(function(){saveToSupabase(data);},1500);
+  }
+}
+
+function debouncedSave(){
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(saveState,800);
+}
+
+// ── Boot: localStorage first (instant), then Supabase (sync) ─────────────
+function bootLoad(){
+  var localData=loadLocal();
+  var loadedFromLocal=false;
+
+  if(localData){
+    applyState(localData);
+    liveRepackImmediate();
+    loadedFromLocal=true;
+    setSyncUI('idle','Loading cloud...');
+  }
+
+  // file:// blocks cross-origin fetch — skip cloud entirely, show helpful message
+  if(window.location.protocol==='file:'){
+    setSyncUI('error','Host on https:// for sync');
+    console.warn('WeekFlow: running from file:// — Supabase sync disabled. Host on GitHub Pages or similar for cross-device sync.');
+    return Promise.resolve(loadedFromLocal);
+  }
+
+  if(!hasSbConfig()){
+    setSyncUI('off','No sync configured');
+    if(!loadedFromLocal){
+      document.getElementById('calendarBody').innerHTML='<div class="empty-state"><div class="big-icon">&#128197;</div><p>Tasks fill from today. Unticked tasks roll over at midnight.</p></div>';
+    }
+    return Promise.resolve(loadedFromLocal);
+  }
+
+  return loadFromSupabase().then(function(sbData){
+    if(sbData && !sbData.cleared){
+      var sbTime=sbData.savedAt||sbData.saved_at||0;
+      var localTime=localData?localData.savedAt:0;
+      if(sbTime>localTime){
+        // Cloud is newer — apply it
+        document.getElementById('taskList').innerHTML='';
+        document.getElementById('breakList').innerHTML='';
+        scheduledDays=[];completedTasks={};taskIdCounter=0;
+        applyState(sbData);
+        saveLocal(sbData);
+        liveRepackImmediate();
+        showInfo('Synced from cloud — live updates active.','ok');
+      } else {
+        // Local is newer or same — push local to cloud
+        saveToSupabase(collectState());
+        if(loadedFromLocal) showInfo('Local data synced to cloud.','ok');
+      }
+    } else if(loadedFromLocal){
+      // Nothing in cloud yet — upload local
+      saveToSupabase(collectState());
+      showInfo('Data uploaded to cloud — live sync active.','ok');
+    }
+    startPolling();
+    return loadedFromLocal||!!sbData;
+  }).catch(function(e){
+    console.warn('Supabase boot failed:',e);
+    var msg=(e&&e.message)?e.message:String(e);
+    if(msg.indexOf('Failed to fetch')!==-1||msg.indexOf('NetworkError')!==-1){
+      setSyncUI('error','file:// blocked — host on https://');
+    } else {
+      setSyncUI('error','Cloud unavailable — using local');
+    }
+    return loadedFromLocal;
+  });
+}
+
+function timeSince(ts){
+  var sec=Math.round((Date.now()-ts)/1000);
+  if(sec<60) return sec+'s';
+  var min=Math.round(sec/60);
+  if(min<60) return min+'m';
+  var h=Math.round(min/60);
+  if(h<24) return h+'h';
+  return Math.round(h/24)+'d';
+}
+
+function clearState(){
+  if(!confirm('Clear all saved data (local + cloud) and reset to defaults?')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  if(hasSbConfig()){
+    sbFetch(SB_TABLE,'POST',{id:1,state:JSON.stringify({cleared:true}),device_id:SB_DEVICE_ID,saved_at:Date.now()})
+      .then(function(){location.reload();}).catch(function(){location.reload();});
+  } else {
+    location.reload();
+  }
+}
+
+function syncNow(){
+  if(!hasSbConfig()){showInfo('Add Supabase config to enable sync.','warn');return;}
+  saveToSupabase(collectState());
+}
+
+// Auto-schedule debounce: rebuild schedule 1s after any task/break/setting change
+var autoSchedTimer=null;
+var autoSchedHardReset=false; // set true when settings that require full regen change
+function triggerAutoSchedule(hardReset){
+  if(hardReset) autoSchedHardReset=true;
+  clearTimeout(autoSchedTimer);
+  autoSchedTimer=setTimeout(function(){
+    var doHard=autoSchedHardReset;
+    autoSchedHardReset=false;
+    if(!getTasks().length) return;
+    // Hard reset (block size / work hours changed, or no schedule yet): full regenerate
+    if(doHard||!scheduledDays.length){
+      generateSchedule();
+    } else {
+      // Soft: preserve day assignments, just repack with updated task names/durations
+      rebuildSchedule();
+    }
+  },1000);
+}
+
+// Wire settings changes -> auto-reschedule
+document.getElementById('workStart').addEventListener('change',function(){triggerAutoSchedule(true);debouncedSave();});
+document.getElementById('workEnd').addEventListener('change',function(){triggerAutoSchedule(true);debouncedSave();});
+document.getElementById('blockSize').addEventListener('change',function(){triggerAutoSchedule(true);debouncedSave();});
+document.getElementById('skipWeekends').addEventListener('change',function(){triggerAutoSchedule(true);debouncedSave();});
+document.getElementById('soundAlerts').addEventListener('change',debouncedSave);
+
+// Wire task list changes -> auto-reschedule
+document.getElementById('taskList').addEventListener('input',function(e){
+  // Only reschedule on duration changes, not every keystroke in name field
+  if(e.target&&e.target.classList.contains('task-dur-inp')) triggerAutoSchedule();
+  debouncedSave();
+});
+document.getElementById('taskList').addEventListener('change',function(){triggerAutoSchedule();debouncedSave();});
+
+// Wire break list changes -> auto-reschedule + cross-sync both panels
+document.getElementById('breakList').addEventListener('input',function(){triggerAutoSchedule();debouncedSave();});
+document.getElementById('breakList').addEventListener('change',function(){syncBreaksToDesktop();triggerAutoSchedule();debouncedSave();});
+
+// Desktop break list wired inside initDesktopPanels, but also cross-sync here
+var bld2=document.getElementById('breakListDesktop');
+if(bld2){
+  bld2.addEventListener('change',function(){syncBreaksToDrawer();triggerAutoSchedule();debouncedSave();});
+}
+
+// Save after schedule generation
+var _origGenerate=generateSchedule;
+generateSchedule=function(){_origGenerate();saveState();};
+
+// ── Boot ───────────────────────────────────────────────────────────────────
+// Run immediately on load so past blocks are ghosted right away
+function liveRepackImmediate(){
+  if(!scheduledDays.length) return;
+  var now=new Date();
+  var s=getSettings();
+  var nowMin=now.getHours()*60+now.getMinutes();
+  for(var d=0;d<scheduledDays.length;d++){
+    var day=scheduledDays[d];
+    if(!sameDay(day.date,now)) continue;
+    var needsRepack=false;
+    for(var b=0;b<day.blocks.length;b++){
+      var blk=day.blocks[b];
+      if(completedTasks[String(blk.taskId)]||blk.pastDue) continue;
+      if(blk.startMin+blk.durationMin<=nowMin){blk.pastDue=true;needsRepack=true;}
+    }
+    if(needsRepack){repackDay(day,s);renderCalendar();}
+    break;
+  }
+}
+
+initPanelStates();
+bootLoad().then(function(loaded){
+  if(!loaded){
+    // First-ever load — seed defaults
+    addBreakRow('Lunch','13:00',60);
+    addBreakRow('QA & Planning','08:00',60);
+    addBreakRow('Mid-morning QA','10:30',30);
+    addBreakRow('Afternoon QA','14:30',30);
+    addBreakRowDesktop('Lunch','13:00',60);
+    addBreakRowDesktop('QA & Planning','08:00',60);
+    addBreakRowDesktop('Mid-morning QA','10:30',30);
+    addBreakRowDesktop('Afternoon QA','14:30',30);
+    var defaultTasks=[
+      ['Walter: update intake hopper drawing (100mm width section)','1'],
+      ['Pipe supports \u2014 Capwell','1.5'],
+      ['Manholes checking \u2014 Capwell','1'],
+      ['Screws inventory & site delivery \u2014 Capwell','1'],
+      ['Raintite procurement \u2014 Capwell','0.5'],
+      ['Caulking template to site \u2014 Capwell','0.5'],
+      ['Painting planning \u2014 area coverage, days & paint qty (ask Mundia & Steve)','1'],
+      ['Vehicular mobility of the bins \u2014 Capwell','1'],
+      ['Mesh: bird & mosquito \u2014 Capwell','0.5'],
+      ['Shared individual roofs \u2014 Capwell','1'],
+      ['Undone RFQs \u2014 water tank','1'],
+      ['Undone RFQs \u2014 general follow-up','1'],
+      ['Report from Herbatula: glass cutting status & next steps \u2014 Sawela','0.5'],
+      ['Bend fascia at Chuma Fabricators \u2014 Sawela','1'],
+      ['Grind & paint fascia, check/order paint stock \u2014 Kamata','1.5'],
+      ['Call Simon \u2014 Britam','0.5'],
+      ['Sport shoe & working shoe (home errand)','0.5']
+    ];
+    defaultTasks.forEach(function(t){
+      addTaskRow(t[0],t[1]);
+      // Get the ID just assigned and mirror to desktop
+      var rows=document.querySelectorAll('#taskList .task-row');
+      var last=rows[rows.length-1];
+      if(last) addTaskRowDesktop(t[0],t[1],last.dataset.id);
+    });
+    generateSchedule();
+  }
+});
+})();
+</script>
+</body>
+</html>
