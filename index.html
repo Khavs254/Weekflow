@@ -1598,7 +1598,7 @@ function startPolling(){
           });
         }
       }).catch(function(){});
-  }, 15000);
+  }, 5000);
 }
 
 function stopPolling(){ if (sbPollTimer) { clearInterval(sbPollTimer); sbPollTimer = null; } }
@@ -1610,7 +1610,7 @@ function saveState(){
   saveLocal(data);
   if (hasSbConfig()){
     clearTimeout(sbSaveTimer);
-    sbSaveTimer = setTimeout(function(){ saveToSupabase(data); }, 1500);
+    sbSaveTimer = setTimeout(function(){ saveToSupabase(data); }, 800);
   }
 }
 
@@ -1646,7 +1646,26 @@ window.clearState = function(){
 
 window.syncNow = function(){
   if (!hasSbConfig()) { showInfo('Add Supabase config to enable sync.', 'warn'); return; }
-  saveToSupabase(collectState());
+  setSyncUI('saving', 'Syncing...');
+  var localData = collectState();
+  saveToSupabase(localData).then(function(){
+    return loadFromSupabase();
+  }).then(function(sbData){
+    if (sbData && !sbData.cleared){
+      var sbTime = sbData.savedAt || sbData.saved_at || 0;
+      var localTime = localData.savedAt || 0;
+      if (sbTime > localTime + 500){
+        applyState(sbData);
+        saveLocal(sbData);
+        showInfo('Pulled latest from cloud.', 'ok');
+      } else {
+        showInfo('Saved to cloud.', 'ok');
+      }
+    }
+  }).catch(function(e){
+    setSyncUI('error', 'Sync failed');
+    setTimeout(function(){ if (hasSbConfig()) setSyncUI('live', 'Cloud sync on'); }, 3000);
+  });
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
