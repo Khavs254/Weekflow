@@ -19,6 +19,23 @@ header span{color:var(--muted);font-size:12px}
 .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
 .panel-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
 .panel-header .dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.panel-header{justify-content:space-between;cursor:pointer;user-select:none;transition:color .15s}
+.panel-header:hover{color:var(--text)}
+.chevron{font-size:9px;transition:transform .2s;opacity:.7}
+.panel-header.collapsed .chevron{transform:rotate(-90deg)}
+.panel-body.hidden{display:none}
+.drawer-section-head{display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:0 0 10px}
+.drawer-section-head .chevron{font-size:9px}
+.drawer-section-head.collapsed .chevron{transform:rotate(-90deg)}
+.collapsible.hidden{display:none}
+.block-subs-toggle{font-size:9px;opacity:.75;margin-top:3px;cursor:pointer;user-select:none;letter-spacing:.3px}
+.block-subs-toggle:hover{opacity:1;text-decoration:underline}
+.block-subs{margin-top:3px;padding-top:3px;border-top:1px dashed rgba(255,255,255,.12);display:flex;flex-direction:column;gap:2px}
+.block-sub{display:flex;align-items:flex-start;gap:4px;font-size:9px;line-height:1.35;cursor:pointer;opacity:.85}
+.block-sub:hover{opacity:1}
+.block-sub input{width:10px;height:10px;margin:1px 0 0;flex-shrink:0;cursor:pointer;accent-color:currentColor}
+.block-sub span{white-space:normal;word-break:break-word}
+.block-sub.done span{text-decoration:line-through;opacity:.5}
 #menuBtn{display:none;background:none;border:2px solid var(--accent);border-radius:8px;color:var(--accent);cursor:pointer;padding:8px 11px;flex-shrink:0;line-height:1;font-size:20px;-webkit-tap-highlight-color:transparent;position:relative;z-index:200;touch-action:manipulation}
 header{position:relative;z-index:50}
 #drawerOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:100;backdrop-filter:blur(2px)}
@@ -48,6 +65,20 @@ header{position:relative;z-index:50}
 .task-row input::placeholder{color:var(--muted);opacity:.6}
 .task-complete{width:15px;height:15px;cursor:pointer;accent-color:var(--accent);flex-shrink:0}
 .task-row.completed .task-name-inp,.task-row.completed .task-dur-inp{text-decoration:line-through;opacity:.4;color:var(--muted)}
+.task-complete:disabled{opacity:.35;cursor:not-allowed;accent-color:var(--muted)}
+.task-group{display:flex;flex-direction:column;gap:4px}
+.task-progress{grid-column:2/5;font-size:9px;color:var(--muted);letter-spacing:.5px;padding:1px 2px 0}
+.task-progress .prog-done{color:var(--accent)}
+.sub-list{display:flex;flex-direction:column;gap:3px;margin:0 0 2px 20px;padding-left:8px;border-left:1px dashed var(--border)}
+.sub-row{display:grid;grid-template-columns:15px 1fr 22px;gap:5px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:3px 6px}
+.sub-row input[type=checkbox]{width:13px;height:13px;cursor:pointer;accent-color:var(--accent);flex-shrink:0}
+.sub-row input[type=text]{background:var(--surface3);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:'DM Mono',monospace;font-size:11px;padding:3px 6px;outline:none;width:100%;transition:border-color .15s}
+.sub-row input[type=text]:focus{border-color:var(--accent2)}
+.sub-row input[type=text]::placeholder{color:var(--muted);opacity:.6}
+.sub-row.done input[type=text]{text-decoration:line-through;opacity:.45;color:var(--muted)}
+.sub-row .remove-btn{height:22px;width:22px;font-size:13px}
+.add-sub-btn{background:none;border:1px dashed var(--border);border-radius:5px;color:var(--muted);cursor:pointer;font-family:'DM Mono',monospace;font-size:10px;padding:4px 8px;text-align:left;transition:all .15s;margin:0 0 2px 28px;width:calc(100% - 28px)}
+.add-sub-btn:hover{border-color:var(--accent2);color:var(--accent2)}
 .dur-input{color:var(--accent3);text-align:center}
 .remove-btn{background:none;border:1px solid var(--border);border-radius:5px;color:var(--muted);cursor:pointer;font-size:15px;height:26px;width:26px;display:flex;align-items:center;justify-content:center;transition:all .15s}
 .remove-btn:hover{border-color:var(--danger);color:var(--danger)}
@@ -214,6 +245,7 @@ header{position:relative;z-index:50}
       <input type="text" id="sbUrlD" placeholder="Supabase URL" autocomplete="off" value="https://xschfdgrlbgcouqaepsp.supabase.co" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Mono',monospace;font-size:11px;padding:7px 9px;outline:none;width:100%;margin-top:5px">
       <input type="password" id="sbKeyD" placeholder="Supabase anon key" autocomplete="off" value="sb_publishable_4aeaSsBVJU8f_F_0H0GpGg_2-CQU-bC" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Mono',monospace;font-size:11px;padding:7px 9px;outline:none;width:100%;margin-top:5px">
       <button onclick="bootLoad()" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--accent2);font-family:'DM Mono',monospace;font-size:11px;padding:8px;cursor:pointer;margin-top:8px;transition:all .15s">🔄 Connect & Sync</button>
+      <button onclick="restoreBackup()" style="width:100%;background:none;border:1px solid var(--border);border-radius:6px;color:var(--accent3);font-family:'DM Mono',monospace;font-size:11px;padding:8px;cursor:pointer;margin-top:6px;transition:all .15s">↩ Restore cloud backup</button>
     </div>
   </div>
 </div>
@@ -269,8 +301,9 @@ header{position:relative;z-index:50}
       </div>
 
       <div class="panel" style="margin-top:10px" id="panelBreaks">
-        <div class="panel-header">
+        <div class="panel-header" onclick="togglePanel('panelBreaks')">
           <span style="display:flex;align-items:center;gap:8px"><div class="dot" style="background:var(--accent3)"></div> Daily Fixed Breaks</span>
+          <span class="chevron">&#9660;</span>
         </div>
         <div class="panel-body" id="bodyBreaks">
           <p style="font-size:10px;color:var(--muted);margin-bottom:12px;line-height:1.6">Blocked daily — tasks will not be scheduled here.</p>
@@ -280,8 +313,9 @@ header{position:relative;z-index:50}
       </div>
 
       <div class="panel" style="margin-top:10px" id="panelTasks">
-        <div class="panel-header">
+        <div class="panel-header" onclick="togglePanel('panelTasks')">
           <span style="display:flex;align-items:center;gap:8px"><div class="dot" style="background:var(--accent2)"></div> Tasks</span>
+          <span class="chevron">&#9660;</span>
         </div>
         <div class="panel-body" id="bodyTasks">
           <div id="taskListDesktop" class="task-input-area"></div>
@@ -305,6 +339,7 @@ header{position:relative;z-index:50}
             <input type="password" id="sbKey" placeholder="Supabase anon key" autocomplete="off" value="sb_publishable_4aeaSsBVJU8f_F_0H0GpGg_2-CQU-bC" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Mono',monospace;font-size:11px;padding:7px 9px;outline:none;width:100%;margin-top:5px">
             <input type="hidden" id="deviceId" value="">
             <button onclick="bootLoad()" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--accent2);font-family:'DM Mono',monospace;font-size:11px;padding:8px;cursor:pointer;margin-top:8px;transition:all .15s" onmouseenter="this.style.borderColor='var(--accent2)'" onmouseleave="this.style.borderColor='var(--border)'">🔄 Connect & Sync</button>
+            <button onclick="restoreBackup()" style="width:100%;background:none;border:1px solid var(--border);border-radius:6px;color:var(--accent3);font-family:'DM Mono',monospace;font-size:11px;padding:8px;cursor:pointer;margin-top:6px;transition:all .15s" onmouseenter="this.style.borderColor='var(--accent3)'" onmouseleave="this.style.borderColor='var(--border)'">↩ Restore cloud backup</button>
             <p style="font-size:9px;color:var(--muted);margin-top:6px;opacity:.7;line-height:1.5">Run once in Supabase SQL Editor:</p>
             <pre style="font-size:9px;background:var(--surface3);border-radius:5px;padding:6px;color:var(--accent);overflow-x:auto;margin-top:4px;line-height:1.6">create table weekflow_state (
   id integer primary key,
@@ -369,6 +404,7 @@ var STATE = {
   completedTasks: {},
   taskIdCounter: 1,
   breakIdCounter: 1,
+  subtaskIdCounter: 1,
   alertedTasks: {},
   lastCheckedDate: new Date().toDateString(),
   rolloverCount: 0
@@ -387,6 +423,8 @@ var SB_DEVICE_ID = (function(){
 var undoStack = [], redoStack = [], MAX_HISTORY = 30;
 var dragData = null, swapState = null;
 var audioCtx = null;
+var blockSubsExpanded = {};  // taskId -> whether its subtask list is open on the calendar
+var suppressScroll = false;  // skip the auto scroll-to-today on in-place re-renders
 
 var DAY_FULL = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 var MONTH = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -461,14 +499,16 @@ function applySettingsToDOM(){
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function addTask(name, hours){
+  snapshotForUndo();
   var id = STATE.taskIdCounter++;
-  STATE.tasks.push({id: id, name: name || '', hours: hours || 0, done: false});
+  STATE.tasks.push({id: id, name: name || '', hours: hours || 0, done: false, subtasks: []});
   renderTasks();
   saveState();
   return id;
 }
 
 function removeTask(id){
+  snapshotForUndo();
   STATE.tasks = STATE.tasks.filter(function(t){ return t.id !== id; });
   delete STATE.completedTasks[String(id)];
   STATE.schedule.forEach(function(day){ day.blocks = day.blocks.filter(function(b){ return String(b.taskId) !== String(id); }); });
@@ -481,7 +521,9 @@ window.removeTask = removeTask;
 function updateTask(id, props){
   var t = STATE.tasks.find(function(x){ return x.id === id; });
   if (!t) return;
-  if (props.name !== undefined) t.name = props.name;
+  snapshotForUndo();
+  var renamed = false;
+  if (props.name !== undefined && props.name !== t.name) { t.name = props.name; renamed = true; }
   if (props.hours !== undefined) t.hours = props.hours;
   if (props.done !== undefined) {
     t.done = props.done;
@@ -491,8 +533,20 @@ function updateTask(id, props){
   renderTasks();
   if (props.hours !== undefined || props.done !== undefined) {
     rebuildSchedule();
+  } else if (renamed) {
+    // Rename doesn't change timing — just relabel the existing blocks in place
+    propagateTaskName(id, t.name);
+    renderCalendar();
   }
   saveState();
+}
+
+function propagateTaskName(taskId, name){
+  STATE.schedule.forEach(function(day){
+    day.blocks.forEach(function(b){
+      if (String(b.taskId) === String(taskId)) b.taskName = name;
+    });
+  });
 }
 
 function renderTasks(){
@@ -502,13 +556,39 @@ function renderTasks(){
 
   var html = '';
   STATE.tasks.forEach(function(t){
+    var subs = t.subtasks || [];
+    var hasSubs = subs.length > 0;
+    var subsDone = subs.filter(function(st){ return st.done; }).length;
     var doneClass = t.done ? 'completed' : '';
     var checked = t.done ? 'checked' : '';
-    html += '<div class="task-row ' + doneClass + '" data-id="' + t.id + '">' +
-      '<input type="checkbox" class="task-complete" ' + checked + ' onchange="onTaskCheck(' + t.id + ', this.checked)">' +
+    var disabled = hasSubs ? 'disabled title="Auto-completes when all subtasks are ticked"' : '';
+    var progHtml = '';
+    if (hasSubs){
+      var allDone = subsDone === subs.length;
+      progHtml = '<div class="task-progress' + '">' +
+        (allDone ? '<span class="prog-done">✓ ' + subsDone + '/' + subs.length + ' subtasks — complete</span>'
+                 : '☑ ' + subsDone + '/' + subs.length + ' subtasks') + '</div>';
+    }
+    html += '<div class="task-group">' +
+      '<div class="task-row ' + doneClass + '" data-id="' + t.id + '">' +
+      '<input type="checkbox" class="task-complete" ' + checked + ' ' + disabled + ' onchange="onTaskCheck(' + t.id + ', this.checked)">' +
       '<input type="text" class="task-name-inp" placeholder="Task name" value="' + escapeHtml(t.name) + '" onchange="onTaskNameChange(' + t.id + ', this.value)" onblur="onTaskNameBlur(' + t.id + ', this.value)">' +
       '<input type="number" class="dur-input task-dur-inp" placeholder="hrs" min="0.25" max="999" step="0.25" value="' + (t.hours || '') + '" onchange="onTaskDurChange(' + t.id + ', this.value)" onblur="onTaskDurBlur(' + t.id + ', this.value)">' +
       '<button class="remove-btn" onclick="removeTask(' + t.id + ')">&times;</button>' +
+      progHtml +
+      '</div>';
+    if (hasSubs){
+      html += '<div class="sub-list">';
+      subs.forEach(function(st){
+        html += '<div class="sub-row ' + (st.done ? 'done' : '') + '">' +
+          '<input type="checkbox" ' + (st.done ? 'checked' : '') + ' onchange="onSubCheck(' + t.id + ', ' + st.id + ', this.checked)">' +
+          '<input type="text" placeholder="Subtask" value="' + escapeHtml(st.name) + '" onchange="onSubNameChange(' + t.id + ', ' + st.id + ', this.value)">' +
+          '<button class="remove-btn" onclick="removeSubtask(' + t.id + ', ' + st.id + ')">&times;</button>' +
+          '</div>';
+      });
+      html += '</div>';
+    }
+    html += '<button class="add-sub-btn" onclick="addSubtask(' + t.id + ')">+ subtask</button>' +
       '</div>';
   });
 
@@ -522,7 +602,82 @@ function renderTasks(){
   if (gbr) gbr.style.display = hasValid ? 'block' : 'none';
 }
 
-window.onTaskCheck = function(id, checked){ updateTask(id, {done: checked}); };
+window.onTaskCheck = function(id, checked){
+  var t = STATE.tasks.find(function(x){ return x.id === id; });
+  if (t && t.subtasks && t.subtasks.length){
+    // Completion is derived from subtasks — never settable directly
+    renderTasks();
+    showInfo('Tick all subtasks to complete "' + (t.name || 'task') + '".', 'warn');
+    return;
+  }
+  updateTask(id, {done: checked});
+};
+
+// ── Subtasks ──────────────────────────────────────────────────────────────────
+function syncParentFromSubs(t){
+  // Returns true if parent done-state flipped (caller must rebuild schedule)
+  if (!t.subtasks || !t.subtasks.length) return false;
+  var allDone = t.subtasks.every(function(st){ return st.done; });
+  if (allDone === t.done) return false;
+  t.done = allDone;
+  if (allDone) STATE.completedTasks[String(t.id)] = true;
+  else delete STATE.completedTasks[String(t.id)];
+  return true;
+}
+
+window.addSubtask = function(taskId){
+  var t = STATE.tasks.find(function(x){ return x.id === taskId; });
+  if (!t) return;
+  snapshotForUndo();
+  if (!t.subtasks) t.subtasks = [];
+  t.subtasks.push({id: STATE.subtaskIdCounter++, name: '', done: false});
+  // A new (unticked) subtask re-opens a completed task
+  var flipped = syncParentFromSubs(t);
+  renderTasks();
+  if (flipped) rebuildSchedule(); else renderCalendar();
+  saveState();
+};
+
+window.removeSubtask = function(taskId, subId){
+  var t = STATE.tasks.find(function(x){ return x.id === taskId; });
+  if (!t || !t.subtasks) return;
+  snapshotForUndo();
+  t.subtasks = t.subtasks.filter(function(st){ return st.id !== subId; });
+  var flipped = syncParentFromSubs(t);
+  renderTasks();
+  if (flipped) rebuildSchedule(); else renderCalendar();
+  saveState();
+};
+
+window.onSubCheck = function(taskId, subId, checked){
+  var t = STATE.tasks.find(function(x){ return x.id === taskId; });
+  if (!t || !t.subtasks) return;
+  var st = t.subtasks.find(function(x){ return x.id === subId; });
+  if (!st) return;
+  snapshotForUndo();
+  st.done = checked;
+  var flipped = syncParentFromSubs(t);
+  renderTasks();
+  if (flipped){
+    rebuildSchedule();
+    if (t.done) showInfo('All subtasks done — "' + (t.name || 'task') + '" completed ✓');
+    else showInfo('"' + (t.name || 'task') + '" re-opened — back on the schedule.', 'warn');
+  } else {
+    renderCalendar(); // refresh subtask progress tags on blocks
+  }
+  saveState();
+};
+
+window.onSubNameChange = function(taskId, subId, val){
+  var t = STATE.tasks.find(function(x){ return x.id === taskId; });
+  if (!t || !t.subtasks) return;
+  var st = t.subtasks.find(function(x){ return x.id === subId; });
+  if (!st) return;
+  if (st.name === val) return;
+  snapshotForUndo();
+  st.name = val;
+  saveState();
+};
 window.onTaskNameChange = function(id, val){ updateTask(id, {name: val}); };
 window.onTaskNameBlur = function(id, val){ updateTask(id, {name: val}); };
 window.onTaskDurChange = function(id, val){ updateTask(id, {hours: parseFloat(val) || 0}); };
@@ -539,6 +694,7 @@ window.onTaskDurBlur = function(id, val){
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function addBreak(label, time, dur, enabled){
+  snapshotForUndo();
   var id = STATE.breakIdCounter++;
   STATE.breaks.push({id: id, label: label || 'Break', time: time || '12:00', dur: parseInt(dur) || 60, enabled: enabled !== false});
   renderBreaks();
@@ -547,6 +703,7 @@ function addBreak(label, time, dur, enabled){
 }
 
 function removeBreak(id){
+  snapshotForUndo();
   STATE.breaks = STATE.breaks.filter(function(b){ return b.id !== id; });
   renderBreaks();
   rebuildSchedule();
@@ -557,6 +714,7 @@ window.removeBreak = removeBreak;
 function updateBreak(id, props){
   var b = STATE.breaks.find(function(x){ return x.id === id; });
   if (!b) return;
+  snapshotForUndo();
   if (props.label !== undefined) b.label = props.label;
   if (props.time !== undefined) b.time = props.time;
   if (props.dur !== undefined) b.dur = parseInt(props.dur) || 60;
@@ -725,6 +883,7 @@ function generateSchedule(){
   STATE.alertedTasks = {};
   STATE.rolloverCount = 0;
   document.getElementById('rolloverBadge').style.display = 'none';
+  snapshotForUndo();
 
   var taskQueue = tasks.map(function(t, idx){
     return {
@@ -781,7 +940,6 @@ function generateSchedule(){
   Object.keys(dayMap).sort().forEach(function(k){ allDays.push(dayMap[k]); });
   recomputeSessionLabels(allDays);
   STATE.schedule = allDays;
-  snapshotForUndo();
   renderCalendar();
   saveState();
 }
@@ -1137,7 +1295,8 @@ function renderCalendar(){
   document.getElementById('slotsInfo').textContent = totalBlocks + ' sessions';
   document.getElementById('spanInfo').textContent = 'across ' + days.length + ' day' + (days.length === 1 ? '' : 's');
   checkAlerts();
-  setTimeout(function(){ var tc = document.querySelector('.day-col.today'); if (tc) tc.scrollIntoView({behavior: 'smooth', block: 'nearest', inline: 'start'}); }, 60);
+  if (suppressScroll) { suppressScroll = false; }
+  else setTimeout(function(){ var tc = document.querySelector('.day-col.today'); if (tc) tc.scrollIntoView({behavior: 'smooth', block: 'nearest', inline: 'start'}); }, 60);
 }
 
 function createBlock(block, dayIdx, isToday, isPast, currentMin, s){
@@ -1153,10 +1312,28 @@ function createBlock(block, dayIdx, isToday, isPast, currentMin, s){
   var resumeNote = (block.splitIdx > 0 && block.splitIdx !== undefined) ? '<div class="block-tag">resumed after break</div>' : '';
   var contNote = (block.totalSessions > 1 && block.session > 1 && !block.splitIdx) ? '<div class="block-tag">cont\'d</div>' : '';
   var rolledNote = block.rolledOver ? '<div class="block-tag">rolled from ' + block.rolledFrom + '</div>' : '';
+  var parentTask = STATE.tasks.find(function(pt){ return String(pt.id) === String(block.taskId); });
+  var hasSubs = !!(parentTask && parentTask.subtasks && parentTask.subtasks.length);
+  var subNote = '';
+  if (hasSubs){
+    var sd = parentTask.subtasks.filter(function(st){ return st.done; }).length;
+    var expandKey = String(parentTask.id);
+    var expanded = !!blockSubsExpanded[expandKey];
+    subNote = '<div class="block-subs-toggle">' + (expanded ? '▾' : '▸') + ' ☑ ' + sd + '/' + parentTask.subtasks.length + ' subtasks</div>';
+    if (expanded){
+      subNote += '<div class="block-subs">';
+      parentTask.subtasks.forEach(function(st){
+        subNote += '<label class="block-sub' + (st.done ? ' done' : '') + '">' +
+          '<input type="checkbox" data-sub-id="' + st.id + '"' + (st.done ? ' checked' : '') + '>' +
+          '<span>' + escapeHtml(st.name || '(unnamed)') + '</span></label>';
+      });
+      subNote += '</div>';
+    }
+  }
   var isActive = isToday && !isDone && currentMin >= block.startMin && currentMin < endMin;
   var durAttr = isActive ? ' data-endmin="' + endMin + '"' : '';
   var durText = isActive ? fmtCountdown(endMin) : block.durationMin + ' min';
-  el.innerHTML = resumeNote + contNote + '<div class="block-time">' + minToTime(block.startMin) + ' – ' + minToTime(endMin) + '</div><div class="block-name">' + block.taskName + '</div><div class="block-dur"' + durAttr + '>' + durText + '</div>' + rolledNote + badge;
+  el.innerHTML = resumeNote + contNote + '<div class="block-time">' + minToTime(block.startMin) + ' – ' + minToTime(endMin) + '</div><div class="block-name">' + block.taskName + '</div><div class="block-dur"' + durAttr + '>' + durText + '</div>' + subNote + rolledNote + badge;
 
   if (isToday && !isDone){
     if (isActive) el.classList.add('alert-active');
@@ -1164,7 +1341,38 @@ function createBlock(block, dayIdx, isToday, isPast, currentMin, s){
     else if (currentMin >= endMin) el.classList.add('alert-overdue');
   }
 
-  el.addEventListener('dragstart', function(){
+  if (hasSubs){
+    var togEl = el.querySelector('.block-subs-toggle');
+    if (togEl){
+      var toggleSubs = function(e){
+        e.stopPropagation(); e.preventDefault();
+        var k = String(parentTask.id);
+        blockSubsExpanded[k] = !blockSubsExpanded[k];
+        suppressScroll = true;
+        renderCalendar();
+      };
+      togEl.addEventListener('click', toggleSubs);
+      togEl.addEventListener('touchend', toggleSubs);
+      togEl.addEventListener('touchstart', function(e){ e.stopPropagation(); }, {passive: true});
+    }
+    var subsWrap = el.querySelector('.block-subs');
+    if (subsWrap){
+      // Keep taps/clicks inside the list away from the block's swap & drag handlers
+      ['click','mousedown','touchstart','touchend','touchmove'].forEach(function(evt){
+        subsWrap.addEventListener(evt, function(e){ e.stopPropagation(); }, evt.indexOf('touch') === 0 ? {passive: evt === 'touchmove'} : false);
+      });
+      subsWrap.querySelectorAll('input[type=checkbox]').forEach(function(cb){
+        cb.addEventListener('change', function(e){
+          e.stopPropagation();
+          suppressScroll = true;
+          window.onSubCheck(parentTask.id, parseInt(cb.getAttribute('data-sub-id')), cb.checked);
+        });
+      });
+    }
+  }
+
+  el.addEventListener('dragstart', function(e){
+    if (e.target && e.target.closest && e.target.closest('.block-subs')) { e.preventDefault(); return; }
     dragData = {dayIdx: dayIdx, taskId: block.taskId, session: block.session};
     setTimeout(function(){ el.classList.add('dragging'); }, 0);
   });
@@ -1234,7 +1442,12 @@ function createBlock(block, dayIdx, isToday, isPast, currentMin, s){
 
   el.addEventListener('mouseenter', function(e){
     var tt = document.getElementById('tooltip');
-    tt.textContent = block.taskName + (block.totalSessions > 1 ? ' (' + block.session + '/' + block.totalSessions + ')' : '') + ' · ' + block.durationMin + ' min' + (block.rolledOver ? ' · rolled from ' + block.rolledFrom : '') + (isDone ? ' · done' : '');
+    var ttSubs = '';
+    var ttTask = STATE.tasks.find(function(pt){ return String(pt.id) === String(block.taskId); });
+    if (ttTask && ttTask.subtasks && ttTask.subtasks.length){
+      ttSubs = ' · ' + ttTask.subtasks.filter(function(st){ return st.done; }).length + '/' + ttTask.subtasks.length + ' subtasks';
+    }
+    tt.textContent = block.taskName + (block.totalSessions > 1 ? ' (' + block.session + '/' + block.totalSessions + ')' : '') + ' · ' + block.durationMin + ' min' + (block.rolledOver ? ' · rolled from ' + block.rolledFrom : '') + ttSubs + (isDone ? ' · done' : '');
     tt.style.display = 'block'; moveTip(e);
   });
   el.addEventListener('mousemove', moveTip);
@@ -1343,16 +1556,39 @@ function showSwapError(msg){
   showInfo(msg, 'warn');
 }
 
-function togglePanel(id){
+var UI_KEY = 'weekflow_ui_prefs';
+function loadUiPrefs(){ try { return JSON.parse(localStorage.getItem(UI_KEY)) || {}; } catch(e){ return {}; } }
+function saveUiPrefs(p){ try { localStorage.setItem(UI_KEY, JSON.stringify(p)); } catch(e){} }
+
+function setPanelCollapsed(id, collapsed){
   var panel = document.getElementById(id);
   if (!panel) return;
   var header = panel.querySelector('.panel-header');
   var body = panel.querySelector('.panel-body');
   if (!header || !body) return;
-  var isHidden = body.classList.contains('hidden');
-  body.classList.toggle('hidden', !isHidden);
-  header.classList.toggle('collapsed', !isHidden);
+  body.classList.toggle('hidden', collapsed);
+  header.classList.toggle('collapsed', collapsed);
 }
+
+function togglePanel(id){
+  var panel = document.getElementById(id);
+  if (!panel) return;
+  var body = panel.querySelector('.panel-body');
+  if (!body) return;
+  var collapsed = !body.classList.contains('hidden');
+  setPanelCollapsed(id, collapsed);
+  var prefs = loadUiPrefs();
+  prefs[id] = collapsed;
+  saveUiPrefs(prefs);
+}
+
+function restorePanelStates(){
+  var prefs = loadUiPrefs();
+  ['panelSettings','panelBreaks','panelTasks','panelSync'].forEach(function(id){
+    if (prefs[id] !== undefined) setPanelCollapsed(id, !!prefs[id]);
+  });
+}
+window.togglePanel = togglePanel;
 
 function openDrawer(){
   document.getElementById('drawer').classList.add('open');
@@ -1433,8 +1669,20 @@ function switchTab(name){
 // UNDO / REDO
 // ═══════════════════════════════════════════════════════════════════════════════
 
+function currentSnapshot(){
+  return JSON.stringify({
+    days: STATE.schedule.map(function(d){
+      return {date: d.date.toISOString(), blocks: d.blocks.map(function(b){ var c = {}; for (var k in b) c[k] = b[k]; return c; })};
+    }),
+    tasks: STATE.tasks,
+    breaks: STATE.breaks,
+    completedTasks: STATE.completedTasks
+  });
+}
+
+// Push the CURRENT state onto the undo stack. Call this BEFORE mutating.
 function snapshotForUndo(){
-  var snap = JSON.stringify({days: STATE.schedule.map(function(d){ return {date: d.date.toISOString(), blocks: d.blocks.map(function(b){ var c = {}; for (var k in b) c[k] = b[k]; return c; })}; })});
+  var snap = currentSnapshot();
   if (undoStack.length && undoStack[undoStack.length-1] === snap) return;
   undoStack.push(snap);
   if (undoStack.length > MAX_HISTORY) undoStack.shift();
@@ -1445,27 +1693,35 @@ function snapshotForUndo(){
 function applySnapshot(snap){
   var data = JSON.parse(snap);
   STATE.schedule = data.days.map(function(d){ return {date: new Date(d.date), blocks: d.blocks}; });
+  if (data.tasks) STATE.tasks = data.tasks;
+  if (data.breaks) STATE.breaks = data.breaks;
+  STATE.completedTasks = data.completedTasks || {};
+  suppressScroll = true;
+  renderTasks();
+  renderBreaks();
   renderCalendar();
   updateUndoButtons();
+  saveState();
 }
 
 function undoAction(){
-  if (undoStack.length < 2) return;
-  redoStack.push(undoStack.pop());
-  applySnapshot(undoStack[undoStack.length-1]);
+  if (!undoStack.length) return;
+  redoStack.push(currentSnapshot());
+  applySnapshot(undoStack.pop());
+  showInfo('Undone.');
 }
 
 function redoAction(){
   if (!redoStack.length) return;
-  var snap = redoStack.pop();
-  undoStack.push(snap);
-  applySnapshot(snap);
+  undoStack.push(currentSnapshot());
+  applySnapshot(redoStack.pop());
+  showInfo('Redone.');
 }
 
 function updateUndoButtons(){
   var u = document.getElementById('undoBtn'), r = document.getElementById('redoBtn');
-  if (u) u.style.opacity = undoStack.length > 1 ? '1' : '0.3';
-  if (r) r.style.opacity = redoStack.length ? '1' : '0.3';
+  if (u) { u.style.opacity = undoStack.length ? '1' : '0.3'; u.style.cursor = undoStack.length ? 'pointer' : 'default'; }
+  if (r) { r.style.opacity = redoStack.length ? '1' : '0.3'; r.style.cursor = redoStack.length ? 'pointer' : 'default'; }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1483,6 +1739,7 @@ function collectState(){
     completedTasks: STATE.completedTasks,
     taskIdCounter: STATE.taskIdCounter,
     breakIdCounter: STATE.breakIdCounter,
+    subtaskIdCounter: STATE.subtaskIdCounter,
     alertedTasks: STATE.alertedTasks,
     lastCheckedDate: STATE.lastCheckedDate,
     rolloverCount: STATE.rolloverCount,
@@ -1493,12 +1750,19 @@ function collectState(){
 function applyState(data){
   if (!data || data.version !== 2) return false;
   if (data.settings) STATE.settings = data.settings;
-  if (data.tasks) STATE.tasks = data.tasks.map(function(t){ return {id: t.id, name: t.name, hours: t.hours, done: !!t.done}; });
+  if (data.tasks) STATE.tasks = data.tasks.map(function(t){ return {id: t.id, name: t.name, hours: t.hours, done: !!t.done, subtasks: (t.subtasks || []).map(function(st){ return {id: st.id, name: st.name || '', done: !!st.done}; })}; });
   if (data.breaks) STATE.breaks = data.breaks.map(function(b){ return {id: b.id, label: b.label, time: b.time, dur: b.dur, enabled: b.enabled !== false}; });
   if (data.schedule) STATE.schedule = data.schedule.map(function(d){ return {date: new Date(d.date), blocks: d.blocks}; });
   if (data.completedTasks) STATE.completedTasks = data.completedTasks;
   if (data.taskIdCounter) STATE.taskIdCounter = data.taskIdCounter;
   if (data.breakIdCounter) STATE.breakIdCounter = data.breakIdCounter;
+  if (data.subtaskIdCounter) STATE.subtaskIdCounter = data.subtaskIdCounter;
+  else {
+    // Legacy data: seed counter past any existing subtask ids
+    var maxSub = 0;
+    STATE.tasks.forEach(function(t){ (t.subtasks || []).forEach(function(st){ if (st.id > maxSub) maxSub = st.id; }); });
+    STATE.subtaskIdCounter = maxSub + 1;
+  }
   if (data.alertedTasks) STATE.alertedTasks = data.alertedTasks;
   if (data.lastCheckedDate) STATE.lastCheckedDate = data.lastCheckedDate;
   if (data.rolloverCount !== undefined) STATE.rolloverCount = data.rolloverCount;
@@ -1538,13 +1802,38 @@ function sbFetch(path, method, body){
 
 var lastRemoteSavedAt = 0;
 var sbPollTimer = null;
+var cloudReadOk = false;   // A session may only WRITE to cloud after a successful cloud READ
+var backupDone = false;    // Cloud row is backed up once per session before first overwrite
+
+function backupCloudRow(){
+  // Copy the current cloud state (id=1) to a backup row (id=2) once per session,
+  // so the first overwrite from this session is always recoverable.
+  if (backupDone) return Promise.resolve();
+  return sbFetch(SB_TABLE + '?id=eq.1&select=state,device_id,saved_at')
+    .then(function(r){ return r.ok ? r.json() : []; })
+    .then(function(rows){
+      backupDone = true;
+      if (!rows || !rows.length || !rows[0].state) return;
+      try { var parsed = JSON.parse(rows[0].state); if (parsed && parsed.cleared) return; } catch(e){ return; }
+      return sbFetch(SB_TABLE, 'POST', {id: 2, state: rows[0].state, device_id: rows[0].device_id, saved_at: rows[0].saved_at});
+    })
+    .catch(function(){ backupDone = true; });
+}
 
 function saveToSupabase(data){
   if (!hasSbConfig()) return Promise.resolve(null);
+  if (!cloudReadOk){
+    // Safety gate: this session hasn't successfully read the cloud state yet,
+    // so it must not overwrite it (prevents stale/offline sessions clobbering good data).
+    console.warn('Cloud save skipped — cloud not read yet this session.');
+    return Promise.resolve(null);
+  }
   data.device_id = SB_DEVICE_ID;
   data.saved_at = Date.now();
   setSyncUI('saving', 'Syncing...');
-  return sbFetch(SB_TABLE, 'POST', {id: 1, state: JSON.stringify(data), device_id: SB_DEVICE_ID, saved_at: data.saved_at})
+  return backupCloudRow().then(function(){
+    return sbFetch(SB_TABLE, 'POST', {id: 1, state: JSON.stringify(data), device_id: SB_DEVICE_ID, saved_at: data.saved_at});
+  })
     .then(function(r){
       if (!r.ok) return r.text().then(function(t){ throw new Error(t); });
       setSyncUI('live', 'Cloud sync on');
@@ -1565,6 +1854,7 @@ function loadFromSupabase(){
   return sbFetch(SB_TABLE + '?id=eq.1&select=state,device_id,saved_at')
     .then(function(r){ if (!r.ok) return r.text().then(function(t){ throw new Error(t); }); return r.json(); })
     .then(function(rows){
+      cloudReadOk = true; // successful read (even an empty table) unlocks writes for this session
       if (!rows || !rows.length || !rows[0].state) return null;
       var data = JSON.parse(rows[0].state);
       lastRemoteSavedAt = rows[0].saved_at || 0;
@@ -1633,11 +1923,12 @@ function setSyncUI(status, msg){
 // ═══════════════════════════════════════════════════════════════════════════════
 
 window.clearState = function(){
-  if (!confirm('Clear ALL saved data (local + cloud) and reset to defaults?\n\nThis cannot be undone.')) return;
+  if (!confirm('Clear ALL saved data (local + cloud) and reset to defaults?\n\nThe current cloud state is backed up first and can be recovered with "Restore cloud backup".')) return;
   var clearedPayload = {cleared: true, clearedAt: Date.now()};
   localStorage.setItem(STORAGE_KEY, JSON.stringify(clearedPayload));
   if (hasSbConfig()){
-    sbFetch(SB_TABLE, 'POST', {id: 1, state: JSON.stringify(clearedPayload), device_id: SB_DEVICE_ID, saved_at: clearedPayload.clearedAt})
+    backupCloudRow()
+      .then(function(){ return sbFetch(SB_TABLE, 'POST', {id: 1, state: JSON.stringify(clearedPayload), device_id: SB_DEVICE_ID, saved_at: clearedPayload.clearedAt}); })
       .then(function(){ location.reload(true); }).catch(function(){ location.reload(true); });
   } else {
     location.reload(true);
@@ -1646,26 +1937,45 @@ window.clearState = function(){
 
 window.syncNow = function(){
   if (!hasSbConfig()) { showInfo('Add Supabase config to enable sync.', 'warn'); return; }
-  setSyncUI('saving', 'Syncing...');
-  var localData = collectState();
-  saveToSupabase(localData).then(function(){
-    return loadFromSupabase();
-  }).then(function(sbData){
+  setSyncUI('loading', 'Syncing...');
+  var localSavedAt = (loadLocal() || {}).savedAt || 0;
+  loadFromSupabase().then(function(sbData){
     if (sbData && !sbData.cleared){
       var sbTime = sbData.savedAt || sbData.saved_at || 0;
-      var localTime = localData.savedAt || 0;
-      if (sbTime > localTime + 500){
+      if (sbTime > localSavedAt + 500){
         applyState(sbData);
         saveLocal(sbData);
         showInfo('Pulled latest from cloud.', 'ok');
-      } else {
-        showInfo('Saved to cloud.', 'ok');
+        return;
       }
     }
+    return saveToSupabase(collectState()).then(function(ok){
+      if (ok) showInfo('Saved to cloud.', 'ok');
+    });
   }).catch(function(e){
     setSyncUI('error', 'Sync failed');
     setTimeout(function(){ if (hasSbConfig()) setSyncUI('live', 'Cloud sync on'); }, 3000);
   });
+};
+
+window.restoreBackup = function(){
+  if (!hasSbConfig()) { showInfo('Add Supabase config first.', 'warn'); return; }
+  if (!confirm('Restore the last cloud backup?\n\nThis replaces your current tasks and schedule with the backed-up version.')) return;
+  setSyncUI('loading', 'Restoring backup...');
+  sbFetch(SB_TABLE + '?id=eq.2&select=state,saved_at')
+    .then(function(r){ return r.ok ? r.json() : []; })
+    .then(function(rows){
+      if (!rows || !rows.length || !rows[0].state){ setSyncUI('live', 'Cloud sync on'); showInfo('No cloud backup found yet.', 'warn'); return; }
+      var data;
+      try { data = JSON.parse(rows[0].state); } catch(e){ showInfo('Backup unreadable.', 'warn'); return; }
+      if (!data || data.cleared){ setSyncUI('live', 'Cloud sync on'); showInfo('Backup is empty.', 'warn'); return; }
+      cloudReadOk = true;
+      applyState(data);
+      saveLocal(collectState());
+      saveToSupabase(collectState());
+      showInfo('Backup restored ✓', 'ok');
+    })
+    .catch(function(){ setSyncUI('error', 'Restore failed'); });
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1754,13 +2064,20 @@ function initEvents(){
   document.getElementById('undoBtn').addEventListener('click', undoAction);
   document.getElementById('redoBtn').addEventListener('click', redoAction);
   document.getElementById('swapCancelBtn').addEventListener('click', clearSwapState);
-  document.addEventListener('keydown', function(e){ if (e.key === 'Escape') clearSwapState(); });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') clearSwapState();
+    var tag = (e.target && e.target.tagName) ? e.target.tagName.toUpperCase() : '';
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return; // let the browser undo typing
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !e.shiftKey){ e.preventDefault(); undoAction(); }
+    else if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'y' || (e.shiftKey && e.key.toLowerCase() === 'z'))){ e.preventDefault(); redoAction(); }
+  });
 
   setInterval(function(){ updateClock(); updateCountdowns(); }, 1000);
   setInterval(checkAlerts, 30000);
   setInterval(checkDayRollover, 60000);
   setInterval(liveRepack, 60000);
   updateClock();
+  restorePanelStates();
 }
 
 var autoSchedTimer = null, autoSchedHardReset = false;
