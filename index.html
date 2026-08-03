@@ -70,13 +70,18 @@ header{position:relative;z-index:50}
 .task-progress{grid-column:2/5;font-size:9px;color:var(--muted);letter-spacing:.5px;padding:1px 2px 0}
 .task-progress .prog-done{color:var(--accent)}
 .sub-list{display:flex;flex-direction:column;gap:3px;margin:0 0 2px 20px;padding-left:8px;border-left:1px dashed var(--border)}
-.sub-row{display:grid;grid-template-columns:15px 1fr 22px;gap:5px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:3px 6px}
+.sub-row{display:grid;grid-template-columns:15px 1fr 46px 22px;gap:5px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:3px 6px}
 .sub-row input[type=checkbox]{width:13px;height:13px;cursor:pointer;accent-color:var(--accent);flex-shrink:0}
 .sub-row input[type=text]{background:var(--surface3);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:'DM Mono',monospace;font-size:11px;padding:3px 6px;outline:none;width:100%;transition:border-color .15s}
 .sub-row input[type=text]:focus{border-color:var(--accent2)}
 .sub-row input[type=text]::placeholder{color:var(--muted);opacity:.6}
 .sub-row.done input[type=text]{text-decoration:line-through;opacity:.45;color:var(--muted)}
 .sub-row .remove-btn{height:22px;width:22px;font-size:13px}
+.sub-dur-inp{background:var(--surface3);border:1px solid var(--border);border-radius:4px;color:var(--accent2);font-family:'DM Mono',monospace;font-size:10px;padding:3px 4px;outline:none;width:100%;text-align:center;transition:border-color .15s}
+.sub-dur-inp:focus{border-color:var(--accent2)}
+.sub-dur-inp::placeholder{color:var(--muted);opacity:.6}
+.sub-row.done .sub-dur-inp{opacity:.45}
+.task-dur-inp.derived{color:var(--accent);opacity:.75;cursor:not-allowed;border-style:dashed}
 .add-sub-btn{background:none;border:1px dashed var(--border);border-radius:5px;color:var(--muted);cursor:pointer;font-family:'DM Mono',monospace;font-size:10px;padding:4px 8px;text-align:left;transition:all .15s;margin:0 0 2px 28px;width:calc(100% - 28px)}
 .add-sub-btn:hover{border-color:var(--accent2);color:var(--accent2)}
 .dur-input{color:var(--accent3);text-align:center}
@@ -518,6 +523,16 @@ function removeTask(id){
 }
 window.removeTask = removeTask;
 
+// A task's scheduled duration comes from its subtasks when it has any,
+// otherwise from its own hours field.
+function effectiveHours(t){
+  if (!t) return 0;
+  if (t.subtasks && t.subtasks.length){
+    return t.subtasks.reduce(function(sum, st){ return sum + (parseFloat(st.hours) || 0); }, 0);
+  }
+  return parseFloat(t.hours) || 0;
+}
+
 function updateTask(id, props){
   var t = STATE.tasks.find(function(x){ return x.id === id; });
   if (!t) return;
@@ -562,18 +577,23 @@ function renderTasks(){
     var doneClass = t.done ? 'completed' : '';
     var checked = t.done ? 'checked' : '';
     var disabled = hasSubs ? 'disabled title="Auto-completes when all subtasks are ticked"' : '';
+    var effHrs = effectiveHours(t);
+    var durField = hasSubs
+      ? '<input type="number" class="dur-input task-dur-inp derived" value="' + (effHrs || '') + '" readonly tabindex="-1" title="Sum of subtask durations — edit the subtasks to change this">'
+      : '<input type="number" class="dur-input task-dur-inp" placeholder="hrs" min="0.25" max="999" step="0.25" value="' + (t.hours || '') + '" onchange="onTaskDurChange(' + t.id + ', this.value)" onblur="onTaskDurBlur(' + t.id + ', this.value)">';
     var progHtml = '';
     if (hasSubs){
       var allDone = subsDone === subs.length;
-      progHtml = '<div class="task-progress' + '">' +
+      var sumTxt = effHrs > 0 ? ' · Σ ' + effHrs + ' hr' + (effHrs === 1 ? '' : 's') : ' · Σ 0 hrs — set subtask times';
+      progHtml = '<div class="task-progress">' +
         (allDone ? '<span class="prog-done">✓ ' + subsDone + '/' + subs.length + ' subtasks — complete</span>'
-                 : '☑ ' + subsDone + '/' + subs.length + ' subtasks') + '</div>';
+                 : '☑ ' + subsDone + '/' + subs.length + ' subtasks') + sumTxt + '</div>';
     }
     html += '<div class="task-group">' +
       '<div class="task-row ' + doneClass + '" data-id="' + t.id + '">' +
       '<input type="checkbox" class="task-complete" ' + checked + ' ' + disabled + ' onchange="onTaskCheck(' + t.id + ', this.checked)">' +
       '<input type="text" class="task-name-inp" placeholder="Task name" value="' + escapeHtml(t.name) + '" onchange="onTaskNameChange(' + t.id + ', this.value)" onblur="onTaskNameBlur(' + t.id + ', this.value)">' +
-      '<input type="number" class="dur-input task-dur-inp" placeholder="hrs" min="0.25" max="999" step="0.25" value="' + (t.hours || '') + '" onchange="onTaskDurChange(' + t.id + ', this.value)" onblur="onTaskDurBlur(' + t.id + ', this.value)">' +
+      durField +
       '<button class="remove-btn" onclick="removeTask(' + t.id + ')">&times;</button>' +
       progHtml +
       '</div>';
@@ -583,6 +603,7 @@ function renderTasks(){
         html += '<div class="sub-row ' + (st.done ? 'done' : '') + '">' +
           '<input type="checkbox" ' + (st.done ? 'checked' : '') + ' onchange="onSubCheck(' + t.id + ', ' + st.id + ', this.checked)">' +
           '<input type="text" placeholder="Subtask" value="' + escapeHtml(st.name) + '" onchange="onSubNameChange(' + t.id + ', ' + st.id + ', this.value)">' +
+          '<input type="number" class="sub-dur-inp" placeholder="hrs" min="0" max="999" step="0.25" value="' + (st.hours || '') + '" onchange="onSubDurChange(' + t.id + ', ' + st.id + ', this.value)">' +
           '<button class="remove-btn" onclick="removeSubtask(' + t.id + ', ' + st.id + ')">&times;</button>' +
           '</div>';
       });
@@ -595,7 +616,7 @@ function renderTasks(){
   drawer.innerHTML = html;
   desktop.innerHTML = html;
 
-  var hasValid = STATE.tasks.some(function(t){ return t.name && t.hours > 0; });
+  var hasValid = STATE.tasks.some(function(t){ return t.name && effectiveHours(t) > 0; });
   var gbd = document.getElementById('generateBtnDesktop');
   var gbr = document.getElementById('generateBtnDrawer');
   if (gbd) gbd.style.display = hasValid ? 'block' : 'none';
@@ -630,7 +651,10 @@ window.addSubtask = function(taskId){
   if (!t) return;
   snapshotForUndo();
   if (!t.subtasks) t.subtasks = [];
-  t.subtasks.push({id: STATE.subtaskIdCounter++, name: '', done: false});
+  // The first subtask inherits the task's existing hours, so switching a task over to
+  // subtask-derived timing doesn't drop it to zero and unschedule it.
+  var seedHours = t.subtasks.length === 0 ? (parseFloat(t.hours) || 0) : 0;
+  t.subtasks.push({id: STATE.subtaskIdCounter++, name: '', done: false, hours: seedHours});
   // A new (unticked) subtask re-opens a completed task
   var flipped = syncParentFromSubs(t);
   renderTasks();
@@ -642,10 +666,14 @@ window.removeSubtask = function(taskId, subId){
   var t = STATE.tasks.find(function(x){ return x.id === taskId; });
   if (!t || !t.subtasks) return;
   snapshotForUndo();
+  var removed = t.subtasks.find(function(st){ return st.id === subId; });
   t.subtasks = t.subtasks.filter(function(st){ return st.id !== subId; });
-  var flipped = syncParentFromSubs(t);
+  // Removing the last subtask hands timing back to the task's own hours field —
+  // seed that from what the subtask held so the duration doesn't collapse.
+  if (!t.subtasks.length && removed && !(parseFloat(t.hours) > 0)) t.hours = parseFloat(removed.hours) || 0;
+  syncParentFromSubs(t);
   renderTasks();
-  if (flipped) rebuildSchedule(); else renderCalendar();
+  rebuildSchedule();   // the derived total changed
   saveState();
 };
 
@@ -665,6 +693,22 @@ window.onSubCheck = function(taskId, subId, checked){
   } else {
     renderCalendar(); // refresh subtask progress tags on blocks
   }
+  saveState();
+};
+
+window.onSubDurChange = function(taskId, subId, val){
+  var t = STATE.tasks.find(function(x){ return x.id === taskId; });
+  if (!t || !t.subtasks) return;
+  var st = t.subtasks.find(function(x){ return x.id === subId; });
+  if (!st) return;
+  var h = parseFloat(val) || 0;
+  if (h < 0) h = 0;
+  if (h > 999) h = 999;
+  if (st.hours === h) return;
+  snapshotForUndo();
+  st.hours = h;
+  renderTasks();
+  rebuildSchedule();
   saveState();
 };
 
@@ -875,7 +919,7 @@ function repackDay(day, s){
 }
 
 function generateSchedule(){
-  var tasks = STATE.tasks.filter(function(t){ return t.name && t.hours > 0 && !t.done; });
+  var tasks = STATE.tasks.filter(function(t){ return t.name && effectiveHours(t) > 0 && !t.done; });
   if (!tasks.length) { showInfo('Add at least one task with a duration.', 'warn'); return; }
   var s = getSettings();
   if (s.we <= s.ws) { showInfo('End time must be after start time.', 'warn'); return; }
@@ -888,7 +932,7 @@ function generateSchedule(){
   var taskQueue = tasks.map(function(t, idx){
     return {
       taskName: t.name, taskId: t.id, taskIdx: idx,
-      durationMin: Math.round(t.hours * 60), color: 'c' + (idx % 8),
+      durationMin: Math.round(effectiveHours(t) * 60), color: 'c' + (idx % 8),
       order: idx, rolledOver: false, session: 1, totalSessions: 1
     };
   });
@@ -947,7 +991,7 @@ function generateSchedule(){
 function rebuildSchedule(){
   var s = getSettings();
   var now = new Date();
-  var tasks = STATE.tasks.filter(function(t){ return t.name && t.hours > 0 && !t.done; });
+  var tasks = STATE.tasks.filter(function(t){ return t.name && effectiveHours(t) > 0 && !t.done; });
   if (!tasks.length) { renderCalendar(); return; }
 
   var ghosts = [];
@@ -976,7 +1020,7 @@ function rebuildSchedule(){
     currentTaskIds[tid] = true;
     if (taskMeta[tid]) {
       taskMeta[tid].taskName = ct.name;
-      var inputMin = Math.round(ct.hours * 60);
+      var inputMin = Math.round(effectiveHours(ct) * 60);
       if (taskMeta[tid]._origHours === undefined) taskMeta[tid]._origHours = taskRemaining[tid];
       if (taskMeta[tid]._origHours === taskRemaining[tid]) {
         taskRemaining[tid] = inputMin;
@@ -993,7 +1037,7 @@ function rebuildSchedule(){
     var ntid = String(nct.id);
     if (!taskMeta[ntid]) {
       taskMeta[ntid] = {taskName: nct.name, taskId: ntid, taskIdx: nct.id, color: 'c' + (nct.id % 8), rolledOver: false};
-      taskRemaining[ntid] = Math.round(nct.hours * 60);
+      taskRemaining[ntid] = Math.round(effectiveHours(nct) * 60);
       taskEarliestPos[ntid] = maxPos + 1000 + (newOffset++) * 10;
     }
   });
@@ -1323,9 +1367,11 @@ function createBlock(block, dayIdx, isToday, isPast, currentMin, s){
     if (expanded){
       subNote += '<div class="block-subs">';
       parentTask.subtasks.forEach(function(st){
+        var stH = parseFloat(st.hours) || 0;
+        var stTxt = stH > 0 ? ' <span style="opacity:.65">· ' + (stH >= 1 ? stH + 'h' : Math.round(stH*60) + 'm') + '</span>' : '';
         subNote += '<label class="block-sub' + (st.done ? ' done' : '') + '">' +
           '<input type="checkbox" data-sub-id="' + st.id + '"' + (st.done ? ' checked' : '') + '>' +
-          '<span>' + escapeHtml(st.name || '(unnamed)') + '</span></label>';
+          '<span>' + escapeHtml(st.name || '(unnamed)') + stTxt + '</span></label>';
       });
       subNote += '</div>';
     }
@@ -1750,7 +1796,7 @@ function collectState(){
 function applyState(data){
   if (!data || data.version !== 2) return false;
   if (data.settings) STATE.settings = data.settings;
-  if (data.tasks) STATE.tasks = data.tasks.map(function(t){ return {id: t.id, name: t.name, hours: t.hours, done: !!t.done, subtasks: (t.subtasks || []).map(function(st){ return {id: st.id, name: st.name || '', done: !!st.done}; })}; });
+  if (data.tasks) STATE.tasks = data.tasks.map(function(t){ return {id: t.id, name: t.name, hours: t.hours, done: !!t.done, subtasks: (t.subtasks || []).map(function(st){ return {id: st.id, name: st.name || '', done: !!st.done, hours: parseFloat(st.hours) || 0}; })}; });
   if (data.breaks) STATE.breaks = data.breaks.map(function(b){ return {id: b.id, label: b.label, time: b.time, dur: b.dur, enabled: b.enabled !== false}; });
   if (data.schedule) STATE.schedule = data.schedule.map(function(d){ return {date: new Date(d.date), blocks: d.blocks}; });
   if (data.completedTasks) STATE.completedTasks = data.completedTasks;
@@ -2086,7 +2132,7 @@ function triggerAutoSchedule(hardReset){
   clearTimeout(autoSchedTimer);
   autoSchedTimer = setTimeout(function(){
     var doHard = autoSchedHardReset; autoSchedHardReset = false;
-    if (!STATE.tasks.some(function(t){ return t.name && t.hours > 0; })) return;
+    if (!STATE.tasks.some(function(t){ return t.name && effectiveHours(t) > 0; })) return;
     if (doHard || !STATE.schedule.length) generateSchedule();
     else rebuildSchedule();
   }, 1000);
