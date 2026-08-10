@@ -76,6 +76,58 @@ header{position:relative;z-index:50}
 .sub-row input[type=text]:focus{border-color:var(--accent2)}
 .sub-row input[type=text]::placeholder{color:var(--muted);opacity:.6}
 .sub-row.done input[type=text]{text-decoration:line-through;opacity:.45;color:var(--muted)}
+.plan-tabs{display:flex;gap:4px;margin-bottom:10px;border-bottom:1px solid var(--border);padding-bottom:0}
+.plan-tab{flex:1;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:7px 4px;cursor:pointer;transition:all .15s}
+.plan-tab:hover{color:var(--text)}
+.plan-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.pri-row{display:grid;grid-template-columns:18px 15px 1fr auto 14px;gap:6px;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 7px;margin-bottom:4px;cursor:grab;transition:all .15s}
+.pri-row:hover{border-color:var(--accent2)}
+.pri-row.dragging{opacity:.4}
+.pri-row.drop-target{border-color:var(--accent);box-shadow:0 -2px 0 var(--accent) inset}
+.pri-row.picked{border-color:var(--accent);background:var(--surface3)}
+.pri-row.done{opacity:.45}
+.pri-row.done .pri-name{text-decoration:line-through}
+.pri-rank{font-size:9px;color:var(--muted);text-align:center}
+.pri-check{width:13px;height:13px;cursor:pointer;accent-color:var(--accent)}
+.pri-body{display:flex;flex-direction:column;gap:1px;min-width:0}
+.pri-parent{font-size:8px;color:var(--accent2);text-transform:uppercase;letter-spacing:.6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pri-name{font-size:11px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pri-dur{font-size:9px;color:var(--accent);white-space:nowrap}
+.pri-grip{font-size:11px;color:var(--muted);cursor:grab;text-align:center}
+.block-parent{font-size:8px;text-transform:uppercase;letter-spacing:.6px;opacity:.7;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.block-done{display:flex;align-items:center;gap:4px;font-size:9px;margin-top:3px;cursor:pointer;opacity:.7}
+.block-done:hover{opacity:1}
+.block-done input{width:11px;height:11px;cursor:pointer;accent-color:currentColor}
+.view-switch{display:flex;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:2px}
+.view-btn{background:none;border:none;border-radius:5px;color:var(--muted);font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.5px;padding:5px 11px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.view-btn:hover{color:var(--text)}
+.view-btn.active{background:var(--surface3);color:var(--accent)}
+.board-grid{display:flex;gap:10px;padding:14px;align-items:flex-start;min-height:200px}
+.board-col{flex:0 0 240px;background:var(--surface);border:1px solid var(--border);border-radius:9px;overflow:hidden;display:flex;flex-direction:column}
+.board-col.complete{opacity:.55}
+.board-head{padding:10px 11px 9px;border-bottom:1px solid var(--border);background:var(--surface2)}
+.board-title{width:100%;background:none;border:none;color:var(--text);font-family:'Instrument Serif',serif;font-size:17px;outline:none;padding:0 0 4px}
+.board-title:focus{border-bottom:1px solid var(--accent2)}
+.board-meta{display:flex;justify-content:space-between;font-size:9px;color:var(--muted);letter-spacing:.4px;margin-bottom:6px}
+.board-bar{height:3px;background:var(--surface3);border-radius:2px;overflow:hidden}
+.board-bar-fill{height:100%;background:var(--accent);transition:width .3s}
+.board-cards{padding:8px;display:flex;flex-direction:column;gap:5px}
+.board-card{display:grid;grid-template-columns:14px 1fr 44px 18px;gap:5px;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 6px}
+.board-card.single{grid-template-columns:14px 1fr auto}
+.board-card.done{opacity:.5}
+.board-card.done .board-card-inp{text-decoration:line-through}
+.board-card input[type=checkbox]{width:13px;height:13px;cursor:pointer;accent-color:var(--accent)}
+.board-card-inp{background:none;border:none;color:var(--text);font-family:'DM Mono',monospace;font-size:11px;outline:none;width:100%;padding:2px 0}
+.board-card-inp:focus{border-bottom:1px solid var(--accent2)}
+.board-card-name{font-size:11px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.board-card-dur{font-size:9px;color:var(--accent)}
+.board-card-dur-inp{background:var(--surface3);border:1px solid var(--border);border-radius:4px;color:var(--accent2);font-family:'DM Mono',monospace;font-size:9px;padding:3px;outline:none;width:100%;text-align:center}
+.board-card-dur-inp:focus{border-color:var(--accent2)}
+.board-card-x{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;line-height:1;padding:0}
+.board-card-x:hover{color:var(--danger)}
+.board-add{background:none;border:1px dashed var(--border);border-radius:6px;color:var(--muted);cursor:pointer;font-family:'DM Mono',monospace;font-size:10px;padding:5px;transition:all .15s}
+.board-add:hover{border-color:var(--accent2);color:var(--accent2)}
+@media(max-width:900px){.board-col{flex:0 0 200px}}
 .sub-row .remove-btn{height:22px;width:22px;font-size:13px}
 .sub-dur-inp{background:var(--surface3);border:1px solid var(--border);border-radius:4px;color:var(--accent2);font-family:'DM Mono',monospace;font-size:10px;padding:3px 4px;outline:none;width:100%;text-align:center;transition:border-color .15s}
 .sub-dur-inp:focus{border-color:var(--accent2)}
@@ -319,13 +371,23 @@ header{position:relative;z-index:50}
 
       <div class="panel" style="margin-top:10px" id="panelTasks">
         <div class="panel-header" onclick="togglePanel('panelTasks')">
-          <span style="display:flex;align-items:center;gap:8px"><div class="dot" style="background:var(--accent2)"></div> Tasks</span>
+          <span style="display:flex;align-items:center;gap:8px"><div class="dot" style="background:var(--accent2)"></div> Work</span>
           <span class="chevron">&#9660;</span>
         </div>
         <div class="panel-body" id="bodyTasks">
-          <div id="taskListDesktop" class="task-input-area"></div>
-          <p class="dur-hint">0.5 = 30 min · 2 = 2 hrs · 8 = full day</p>
-          <button class="add-task-btn" id="addTaskBtnDesktop">+ Add Task</button>
+          <div class="plan-tabs">
+            <button class="plan-tab active" data-tab="plan" onclick="switchPlanTab('plan')">Projects</button>
+            <button class="plan-tab" data-tab="priority" onclick="switchPlanTab('priority')">Priority</button>
+          </div>
+          <div id="priorityPane" style="display:none">
+            <div style="font-size:10px;color:var(--muted);margin-bottom:8px;line-height:1.5">Every subtask, in the order it gets scheduled. Drag to re-prioritise.</div>
+            <div id="priorityListDesktop"></div>
+          </div>
+          <div id="planPane">
+            <div id="taskListDesktop" class="task-input-area"></div>
+            <p class="dur-hint">0.5 = 30 min · 2 = 2 hrs · 8 = full day</p>
+            <button class="add-task-btn" id="addTaskBtnDesktop">+ Add Task</button>
+          </div>
           <div class="info-bar" id="infoBarDesktop"></div>
           <button onclick="clearState()" style="margin-top:8px;width:100%;background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-family:'DM Mono',monospace;font-size:10px;padding:6px;cursor:pointer;letter-spacing:.5px" onmouseenter="this.style.borderColor='var(--danger)';this.style.color='var(--danger)'" onmouseleave="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">🗑 Clear saved data & reset</button>
           <button class="generate-btn" id="generateBtnDesktop" style="display:none">Schedule from Today →</button>
@@ -363,7 +425,10 @@ create policy "allow all" on weekflow_state
     <div>
       <div class="panel" id="calendarPanel">
         <div class="calendar-header">
-          <span class="calendar-title">Forward Schedule</span>
+          <div class="view-switch">
+            <button class="view-btn active" data-view="schedule" onclick="switchMainView('schedule')">Forward Schedule</button>
+            <button class="view-btn" data-view="board" onclick="switchMainView('board')">Projects Board</button>
+          </div>
           <div class="calendar-meta">
             <span id="slotsInfo"></span>
             <span id="spanInfo"></span>
@@ -374,7 +439,10 @@ create policy "allow all" on weekflow_state
             <button id="redoBtn" title="Redo" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);cursor:pointer;font-size:14px;padding:4px 10px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;opacity:0.3">↪</button>
           </div>
         </div>
-        <div class="cal-scroll">
+        <div class="cal-scroll" id="boardScroll" style="display:none">
+          <div id="boardBody"></div>
+        </div>
+        <div class="cal-scroll" id="scheduleScroll">
           <div id="calendarBody">
             <div class="empty-state">
               <div class="big-icon">📅</div>
@@ -410,6 +478,8 @@ var STATE = {
   taskIdCounter: 1,
   breakIdCounter: 1,
   subtaskIdCounter: 1,
+  priority: [],
+  schemaV: 3,
   alertedTasks: {},
   lastCheckedDate: new Date().toDateString(),
   rolloverCount: 0
@@ -533,6 +603,271 @@ function effectiveHours(t){
   return parseFloat(t.hours) || 0;
 }
 
+// ── Work items ────────────────────────────────────────────────────────────────
+// The scheduler's unit of work. A task WITH subtasks contributes one item per
+// subtask; a task WITHOUT subtasks contributes itself. `key` is what blocks carry
+// as taskId, so the packer/drag code works unchanged.
+function itemKey(taskId, subId){ return subId === null || subId === undefined ? String(taskId) : String(taskId) + ':' + String(subId); }
+
+function workItems(includeDone){
+  var out = [];
+  STATE.tasks.forEach(function(t, idx){
+    if (t.subtasks && t.subtasks.length){
+      t.subtasks.forEach(function(st){
+        var h = parseFloat(st.hours) || 0;
+        if (h <= 0) return;
+        if (!includeDone && st.done) return;
+        out.push({
+          key: itemKey(t.id, st.id), taskId: t.id, subId: st.id,
+          name: st.name || '(unnamed subtask)', parentName: t.name || '(untitled)',
+          hours: h, done: !!st.done, colorIdx: idx
+        });
+      });
+    } else {
+      var th = effectiveHours(t);
+      if (th <= 0 || !t.name) return;
+      if (!includeDone && t.done) return;
+      out.push({
+        key: itemKey(t.id, null), taskId: t.id, subId: null,
+        name: t.name, parentName: null, hours: th, done: !!t.done, colorIdx: idx
+      });
+    }
+  });
+  return out;
+}
+
+// STATE.priority is an ordered list of item keys. New items land at the end;
+// keys for deleted work drop out.
+function syncPriority(){
+  var items = workItems(true);
+  var valid = {};
+  items.forEach(function(it){ valid[it.key] = true; });
+  if (!Array.isArray(STATE.priority)) STATE.priority = [];
+  STATE.priority = STATE.priority.filter(function(k){ return valid[k]; });
+  var have = {};
+  STATE.priority.forEach(function(k){ have[k] = true; });
+  items.forEach(function(it){ if (!have[it.key]) STATE.priority.push(it.key); });
+  return STATE.priority;
+}
+
+function priorityIndex(key){
+  var i = STATE.priority.indexOf(key);
+  return i === -1 ? 99999 : i;
+}
+
+// Calendar order -> priority list, so dragging blocks updates the Priority tab.
+function syncPriorityFromSchedule(){
+  var seen = {}, order = [];
+  STATE.schedule.forEach(function(day){
+    day.blocks.slice().sort(function(a,b){
+      return (a.startMin !== undefined ? a.startMin : (a.order || 0)) - (b.startMin !== undefined ? b.startMin : (b.order || 0));
+    }).forEach(function(b){
+      var k = String(b.taskId);
+      if (!seen[k]) { seen[k] = true; order.push(k); }
+    });
+  });
+  // anything not currently on the calendar keeps its existing relative place at the end
+  STATE.priority.forEach(function(k){ if (!seen[k]) { seen[k] = true; order.push(k); } });
+  STATE.priority = order;
+}
+
+// Items in priority order, ready for the packer.
+function orderedWorkItems(){
+  syncPriority();
+  var items = workItems(false);
+  items.sort(function(a, b){ return priorityIndex(a.key) - priorityIndex(b.key); });
+  return items;
+}
+
+function findWorkItem(key){
+  var parts = String(key).split(':');
+  var t = STATE.tasks.find(function(x){ return String(x.id) === parts[0]; });
+  if (!t) return null;
+  if (parts.length === 1) return {task: t, sub: null};
+  var st = (t.subtasks || []).find(function(x){ return String(x.id) === parts[1]; });
+  if (!st) return null;
+  return {task: t, sub: st};
+}
+
+// Mark a work item done/undone from the calendar, keeping task state in sync.
+function setItemDone(key, done){
+  var f = findWorkItem(key);
+  if (!f) return false;
+  if (f.sub){
+    f.sub.done = done;
+    syncParentFromSubs(f.task);
+  } else {
+    f.task.done = done;
+  }
+  if (done) STATE.completedTasks[String(key)] = true;
+  else delete STATE.completedTasks[String(key)];
+  return true;
+}
+
+// ── Priority tab ──────────────────────────────────────────────────────────────
+var planTab = 'plan';
+var priDrag = null;
+
+window.switchPlanTab = function(tab){
+  planTab = tab;
+  ['planPane','priorityPane'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.style.display = (id === (tab === 'plan' ? 'planPane' : 'priorityPane')) ? '' : 'none';
+  });
+  document.querySelectorAll('.plan-tab').forEach(function(b){
+    b.classList.toggle('active', b.getAttribute('data-tab') === tab);
+  });
+  if (tab === 'priority') renderPriority();
+  var prefs = loadUiPrefs(); prefs.planTab = tab; saveUiPrefs(prefs);
+};
+
+function renderPriority(){
+  var host = document.getElementById('priorityListDesktop');
+  if (!host) return;
+  syncPriority();
+  var items = workItems(true);
+  var byKey = {};
+  items.forEach(function(it){ byKey[it.key] = it; });
+  var ordered = STATE.priority.map(function(k){ return byKey[k]; }).filter(Boolean);
+
+  if (!ordered.length){
+    host.innerHTML = '<div style="font-size:10px;color:var(--muted);padding:10px 2px">Nothing to prioritise yet — add tasks and subtasks with durations in the Projects tab.</div>';
+    return;
+  }
+
+  var html = '';
+  ordered.forEach(function(it, i){
+    var hrTxt = it.hours >= 1 ? it.hours + 'h' : Math.round(it.hours * 60) + 'm';
+    html += '<div class="pri-row' + (it.done ? ' done' : '') + '" draggable="true" data-key="' + escapeHtml(it.key) + '">' +
+      '<span class="pri-rank">' + (i + 1) + '</span>' +
+      '<input type="checkbox" class="pri-check"' + (it.done ? ' checked' : '') + '>' +
+      '<span class="pri-body">' +
+        (it.parentName ? '<span class="pri-parent">' + escapeHtml(it.parentName) + '</span>' : '') +
+        '<span class="pri-name">' + escapeHtml(it.name) + '</span>' +
+      '</span>' +
+      '<span class="pri-dur">' + hrTxt + '</span>' +
+      '<span class="pri-grip">⠿</span>' +
+      '</div>';
+  });
+  host.innerHTML = html;
+
+  host.querySelectorAll('.pri-row').forEach(function(row){
+    var key = row.getAttribute('data-key');
+    row.addEventListener('dragstart', function(e){
+      if (e.target && e.target.closest && e.target.closest('.pri-check')) { e.preventDefault(); return; }
+      priDrag = key; row.classList.add('dragging');
+    });
+    row.addEventListener('dragend', function(){ priDrag = null; row.classList.remove('dragging'); host.querySelectorAll('.pri-row').forEach(function(r){ r.classList.remove('drop-target'); }); });
+    row.addEventListener('dragover', function(e){ e.preventDefault(); if (priDrag && priDrag !== key) row.classList.add('drop-target'); });
+    row.addEventListener('dragleave', function(){ row.classList.remove('drop-target'); });
+    row.addEventListener('drop', function(e){
+      e.preventDefault(); e.stopPropagation();
+      row.classList.remove('drop-target');
+      if (!priDrag || priDrag === key) return;
+      movePriority(priDrag, key);
+    });
+    var cb = row.querySelector('.pri-check');
+    if (cb) cb.addEventListener('change', function(){
+      snapshotForUndo();
+      setItemDone(key, cb.checked);
+      renderTasks();
+      rebuildSchedule();
+      renderPriority();
+      saveState();
+    });
+    // tap-to-move on touch: tap grip to pick up, tap another row to drop before it
+    var grip = row.querySelector('.pri-grip');
+    if (grip) grip.addEventListener('click', function(e){
+      e.stopPropagation();
+      if (priDrag === key) { priDrag = null; renderPriority(); return; }
+      priDrag = key;
+      host.querySelectorAll('.pri-row').forEach(function(r){ r.classList.toggle('picked', r.getAttribute('data-key') === key); });
+      showInfo('Picked up — tap another row to move it above.', 'warn');
+    });
+    row.addEventListener('click', function(){
+      if (!priDrag || priDrag === key) return;
+      movePriority(priDrag, key);
+    });
+  });
+}
+
+function movePriority(fromKey, beforeKey){
+  snapshotForUndo();
+  var arr = STATE.priority.slice();
+  var fi = arr.indexOf(fromKey);
+  if (fi === -1) return;
+  arr.splice(fi, 1);
+  var ti = arr.indexOf(beforeKey);
+  if (ti === -1) arr.push(fromKey); else arr.splice(ti, 0, fromKey);
+  STATE.priority = arr;
+  priDrag = null;
+  rebuildSchedule();
+  renderPriority();
+  saveState();
+}
+
+// ── Projects board (wide view) ────────────────────────────────────────────────
+var mainView = 'schedule';
+
+window.switchMainView = function(view){
+  mainView = view;
+  var sched = document.getElementById('scheduleScroll');
+  var board = document.getElementById('boardScroll');
+  if (sched) sched.style.display = view === 'schedule' ? '' : 'none';
+  if (board) board.style.display = view === 'board' ? '' : 'none';
+  document.querySelectorAll('.view-btn').forEach(function(b){
+    b.classList.toggle('active', b.getAttribute('data-view') === view);
+  });
+  if (view === 'board') renderBoard();
+  var prefs = loadUiPrefs(); prefs.mainView = view; saveUiPrefs(prefs);
+};
+
+function renderBoard(){
+  var host = document.getElementById('boardBody');
+  if (!host) return;
+  if (!STATE.tasks.length){
+    host.innerHTML = '<div class="empty-state"><div class="big-icon">🗂</div><p>No projects yet. Add one from the Projects tab.</p></div>';
+    return;
+  }
+  var html = '<div class="board-grid">';
+  STATE.tasks.forEach(function(t, idx){
+    var subs = t.subtasks || [];
+    var doneN = subs.filter(function(st){ return st.done; }).length;
+    var eff = effectiveHours(t);
+    var pct = subs.length ? Math.round(doneN / subs.length * 100) : (t.done ? 100 : 0);
+    html += '<div class="board-col' + (t.done ? ' complete' : '') + '" data-task-id="' + t.id + '">' +
+      '<div class="board-head c' + (idx % 8) + '">' +
+        '<input type="text" class="board-title" value="' + escapeHtml(t.name) + '" placeholder="Project name" onchange="onTaskNameChange(' + t.id + ', this.value)">' +
+        '<div class="board-meta">' +
+          '<span>' + (eff > 0 ? eff + ' hr' + (eff === 1 ? '' : 's') : 'no time set') + '</span>' +
+          '<span>' + (subs.length ? doneN + '/' + subs.length + ' done' : (t.done ? 'done' : 'no subtasks')) + '</span>' +
+        '</div>' +
+        '<div class="board-bar"><div class="board-bar-fill" style="width:' + pct + '%"></div></div>' +
+      '</div>' +
+      '<div class="board-cards">';
+    if (!subs.length){
+      html += '<div class="board-card single">' +
+        '<input type="checkbox"' + (t.done ? ' checked' : '') + ' onchange="onTaskCheck(' + t.id + ', this.checked)">' +
+        '<span class="board-card-name">' + escapeHtml(t.name || '(untitled)') + '</span>' +
+        '<span class="board-card-dur">' + (eff > 0 ? (eff >= 1 ? eff + 'h' : Math.round(eff*60) + 'm') : '—') + '</span>' +
+        '</div>';
+    }
+    subs.forEach(function(st){
+      var h = parseFloat(st.hours) || 0;
+      html += '<div class="board-card' + (st.done ? ' done' : '') + '">' +
+        '<input type="checkbox"' + (st.done ? ' checked' : '') + ' onchange="onSubCheck(' + t.id + ', ' + st.id + ', this.checked)">' +
+        '<input type="text" class="board-card-inp" value="' + escapeHtml(st.name) + '" placeholder="Subtask" onchange="onSubNameChange(' + t.id + ', ' + st.id + ', this.value)">' +
+        '<input type="number" class="board-card-dur-inp" min="0" max="999" step="0.25" value="' + (st.hours || '') + '" placeholder="hrs" onchange="onSubDurChange(' + t.id + ', ' + st.id + ', this.value)">' +
+        '<button class="board-card-x" onclick="removeSubtask(' + t.id + ', ' + st.id + ')">&times;</button>' +
+        '</div>';
+    });
+    html += '<button class="board-add" onclick="addSubtask(' + t.id + ')">+ subtask</button>' +
+      '</div></div>';
+  });
+  html += '</div>';
+  host.innerHTML = html;
+}
+
 function updateTask(id, props){
   var t = STATE.tasks.find(function(x){ return x.id === id; });
   if (!t) return;
@@ -565,6 +900,8 @@ function propagateTaskName(taskId, name){
 }
 
 function renderTasks(){
+  if (planTab === 'priority') renderPriority();
+  if (mainView === 'board') renderBoard();
   var drawer = document.getElementById('taskListDrawer');
   var desktop = document.getElementById('taskListDesktop');
   if (!drawer || !desktop) return;
@@ -641,8 +978,7 @@ function syncParentFromSubs(t){
   var allDone = t.subtasks.every(function(st){ return st.done; });
   if (allDone === t.done) return false;
   t.done = allDone;
-  if (allDone) STATE.completedTasks[String(t.id)] = true;
-  else delete STATE.completedTasks[String(t.id)];
+  delete STATE.completedTasks[String(t.id)];  // tasks with subtasks aren't scheduled themselves
   return true;
 }
 
@@ -684,6 +1020,8 @@ window.onSubCheck = function(taskId, subId, checked){
   if (!st) return;
   snapshotForUndo();
   st.done = checked;
+  if (checked) STATE.completedTasks[itemKey(t.id, st.id)] = true;
+  else delete STATE.completedTasks[itemKey(t.id, st.id)];
   var flipped = syncParentFromSubs(t);
   renderTasks();
   if (flipped){
@@ -919,8 +1257,8 @@ function repackDay(day, s){
 }
 
 function generateSchedule(){
-  var tasks = STATE.tasks.filter(function(t){ return t.name && effectiveHours(t) > 0 && !t.done; });
-  if (!tasks.length) { showInfo('Add at least one task with a duration.', 'warn'); return; }
+  var items = orderedWorkItems();
+  if (!items.length) { showInfo('Add at least one task (or subtask) with a duration.', 'warn'); return; }
   var s = getSettings();
   if (s.we <= s.ws) { showInfo('End time must be after start time.', 'warn'); return; }
 
@@ -929,10 +1267,10 @@ function generateSchedule(){
   document.getElementById('rolloverBadge').style.display = 'none';
   snapshotForUndo();
 
-  var taskQueue = tasks.map(function(t, idx){
+  var taskQueue = items.map(function(it, idx){
     return {
-      taskName: t.name, taskId: t.id, taskIdx: idx,
-      durationMin: Math.round(effectiveHours(t) * 60), color: 'c' + (idx % 8),
+      taskName: it.name, parentName: it.parentName, taskId: it.key, taskIdx: idx,
+      durationMin: Math.round(it.hours * 60), color: 'c' + (it.colorIdx % 8),
       order: idx, rolledOver: false, session: 1, totalSessions: 1
     };
   });
@@ -957,7 +1295,7 @@ function generateSchedule(){
     for (var ti = 0; ti < remaining.length; ti++){
       var tblk = remaining[ti];
       var testBlocks = day.blocks.concat([{
-        taskName: tblk.taskName, taskId: tblk.taskId, taskIdx: tblk.taskIdx,
+        taskName: tblk.taskName, parentName: tblk.parentName, taskId: tblk.taskId, taskIdx: tblk.taskIdx,
         durationMin: tblk.durationMin, color: tblk.color, order: day.blocks.length + ti,
         rolledOver: tblk.rolledOver || false, session: 1, totalSessions: 1
       }]);
@@ -991,8 +1329,8 @@ function generateSchedule(){
 function rebuildSchedule(){
   var s = getSettings();
   var now = new Date();
-  var tasks = STATE.tasks.filter(function(t){ return t.name && effectiveHours(t) > 0 && !t.done; });
-  if (!tasks.length) { renderCalendar(); return; }
+  var items = orderedWorkItems();
+  if (!items.length) { STATE.schedule.forEach(function(d){ d.blocks = d.blocks.filter(function(b){ return STATE.completedTasks[String(b.taskId)] || b.pastDue; }); }); renderCalendar(); return; }
 
   var ghosts = [];
   STATE.schedule.forEach(function(day){
@@ -1008,19 +1346,20 @@ function rebuildSchedule(){
       var tid = String(blk.taskId);
       if (!taskRemaining[tid]) taskRemaining[tid] = 0;
       taskRemaining[tid] += blk.durationMin;
-      if (!taskMeta[tid]) taskMeta[tid] = {taskName: blk.taskName, taskId: blk.taskId, taskIdx: blk.taskIdx || 0, color: blk.color || 'c0', rolledOver: blk.rolledOver || false};
+      if (!taskMeta[tid]) taskMeta[tid] = {taskName: blk.taskName, parentName: blk.parentName, taskId: blk.taskId, taskIdx: blk.taskIdx || 0, color: blk.color || 'c0', rolledOver: blk.rolledOver || false};
       var pos = dIdx * 100000 + (blk.startMin !== undefined ? blk.startMin : (blk.order !== undefined ? blk.order : 99999));
       if (taskEarliestPos[tid] === undefined || pos < taskEarliestPos[tid]) taskEarliestPos[tid] = pos;
     });
   });
 
   var currentTaskIds = {};
-  tasks.forEach(function(ct){
-    var tid = String(ct.id);
+  items.forEach(function(ct){
+    var tid = String(ct.key);
     currentTaskIds[tid] = true;
     if (taskMeta[tid]) {
       taskMeta[tid].taskName = ct.name;
-      var inputMin = Math.round(effectiveHours(ct) * 60);
+      taskMeta[tid].parentName = ct.parentName;
+      var inputMin = Math.round(ct.hours * 60);
       if (taskMeta[tid]._origHours === undefined) taskMeta[tid]._origHours = taskRemaining[tid];
       if (taskMeta[tid]._origHours === taskRemaining[tid]) {
         taskRemaining[tid] = inputMin;
@@ -1033,21 +1372,21 @@ function rebuildSchedule(){
   var maxPos = 0;
   for (var _tid in taskEarliestPos) { if (taskEarliestPos[_tid] > maxPos) maxPos = taskEarliestPos[_tid]; }
   var newOffset = 0;
-  tasks.forEach(function(nct){
-    var ntid = String(nct.id);
+  items.forEach(function(nct){
+    var ntid = String(nct.key);
     if (!taskMeta[ntid]) {
-      taskMeta[ntid] = {taskName: nct.name, taskId: ntid, taskIdx: nct.id, color: 'c' + (nct.id % 8), rolledOver: false};
-      taskRemaining[ntid] = Math.round(effectiveHours(nct) * 60);
+      taskMeta[ntid] = {taskName: nct.name, parentName: nct.parentName, taskId: ntid, taskIdx: nct.colorIdx, color: 'c' + (nct.colorIdx % 8), rolledOver: false};
+      taskRemaining[ntid] = Math.round(nct.hours * 60);
       taskEarliestPos[ntid] = maxPos + 1000 + (newOffset++) * 10;
     }
   });
 
   var taskQueue = Object.keys(taskMeta).map(function(tid){
     return {
-      taskName: taskMeta[tid].taskName, taskId: taskMeta[tid].taskId,
+      taskName: taskMeta[tid].taskName, parentName: taskMeta[tid].parentName, taskId: taskMeta[tid].taskId,
       taskIdx: taskMeta[tid].taskIdx, durationMin: taskRemaining[tid],
       color: taskMeta[tid].color, rolledOver: taskMeta[tid].rolledOver,
-      schedPos: taskEarliestPos[tid] !== undefined ? taskEarliestPos[tid] : 999999
+      schedPos: priorityIndex(tid)
     };
   });
   taskQueue.sort(function(a,b){ return a.schedPos - b.schedPos; });
@@ -1070,7 +1409,7 @@ function rebuildSchedule(){
       var tblk = remaining[ti];
       var packOrder = tblk.schedPos !== undefined ? tblk.schedPos : day.blocks.length + ti;
       var testBlocks = day.blocks.concat([{
-        taskName: tblk.taskName, taskId: tblk.taskId, taskIdx: tblk.taskIdx,
+        taskName: tblk.taskName, parentName: tblk.parentName, taskId: tblk.taskId, taskIdx: tblk.taskIdx,
         durationMin: tblk.durationMin, color: tblk.color, order: packOrder,
         rolledOver: tblk.rolledOver || false, session: 1, totalSessions: 1
       }]);
@@ -1099,6 +1438,8 @@ function rebuildSchedule(){
   Object.keys(dayMap).sort().forEach(function(k){ allDays.push(dayMap[k]); });
   recomputeSessionLabels(allDays);
   STATE.schedule = allDays;
+  syncPriorityFromSchedule();   // dragging on the calendar re-prioritises
+  renderTasks();
   renderCalendar();
   showInfo('Schedule updated.');
   saveState();
@@ -1356,30 +1697,12 @@ function createBlock(block, dayIdx, isToday, isPast, currentMin, s){
   var resumeNote = (block.splitIdx > 0 && block.splitIdx !== undefined) ? '<div class="block-tag">resumed after break</div>' : '';
   var contNote = (block.totalSessions > 1 && block.session > 1 && !block.splitIdx) ? '<div class="block-tag">cont\'d</div>' : '';
   var rolledNote = block.rolledOver ? '<div class="block-tag">rolled from ' + block.rolledFrom + '</div>' : '';
-  var parentTask = STATE.tasks.find(function(pt){ return String(pt.id) === String(block.taskId); });
-  var hasSubs = !!(parentTask && parentTask.subtasks && parentTask.subtasks.length);
-  var subNote = '';
-  if (hasSubs){
-    var sd = parentTask.subtasks.filter(function(st){ return st.done; }).length;
-    var expandKey = String(parentTask.id);
-    var expanded = !!blockSubsExpanded[expandKey];
-    subNote = '<div class="block-subs-toggle">' + (expanded ? '▾' : '▸') + ' ☑ ' + sd + '/' + parentTask.subtasks.length + ' subtasks</div>';
-    if (expanded){
-      subNote += '<div class="block-subs">';
-      parentTask.subtasks.forEach(function(st){
-        var stH = parseFloat(st.hours) || 0;
-        var stTxt = stH > 0 ? ' <span style="opacity:.65">· ' + (stH >= 1 ? stH + 'h' : Math.round(stH*60) + 'm') + '</span>' : '';
-        subNote += '<label class="block-sub' + (st.done ? ' done' : '') + '">' +
-          '<input type="checkbox" data-sub-id="' + st.id + '"' + (st.done ? ' checked' : '') + '>' +
-          '<span>' + escapeHtml(st.name || '(unnamed)') + stTxt + '</span></label>';
-      });
-      subNote += '</div>';
-    }
-  }
+  var parentLabel = block.parentName ? '<div class="block-parent">' + escapeHtml(block.parentName) + '</div>' : '';
+  var subNote = '<label class="block-done"><input type="checkbox" data-item-key="' + escapeHtml(String(block.taskId)) + '"' + (isDone ? ' checked' : '') + '><span>' + (isDone ? 'done' : 'mark done') + '</span></label>';
   var isActive = isToday && !isDone && currentMin >= block.startMin && currentMin < endMin;
   var durAttr = isActive ? ' data-endmin="' + endMin + '"' : '';
   var durText = isActive ? fmtCountdown(endMin) : block.durationMin + ' min';
-  el.innerHTML = resumeNote + contNote + '<div class="block-time">' + minToTime(block.startMin) + ' – ' + minToTime(endMin) + '</div><div class="block-name">' + block.taskName + '</div><div class="block-dur"' + durAttr + '>' + durText + '</div>' + subNote + rolledNote + badge;
+  el.innerHTML = resumeNote + contNote + '<div class="block-time">' + minToTime(block.startMin) + ' – ' + minToTime(endMin) + '</div>' + parentLabel + '<div class="block-name">' + block.taskName + '</div><div class="block-dur"' + durAttr + '>' + durText + '</div>' + subNote + rolledNote + badge;
 
   if (isToday && !isDone){
     if (isActive) el.classList.add('alert-active');
@@ -1387,38 +1710,25 @@ function createBlock(block, dayIdx, isToday, isPast, currentMin, s){
     else if (currentMin >= endMin) el.classList.add('alert-overdue');
   }
 
-  if (hasSubs){
-    var togEl = el.querySelector('.block-subs-toggle');
-    if (togEl){
-      var toggleSubs = function(e){
-        e.stopPropagation(); e.preventDefault();
-        var k = String(parentTask.id);
-        blockSubsExpanded[k] = !blockSubsExpanded[k];
-        suppressScroll = true;
-        renderCalendar();
-      };
-      togEl.addEventListener('click', toggleSubs);
-      togEl.addEventListener('touchend', toggleSubs);
-      togEl.addEventListener('touchstart', function(e){ e.stopPropagation(); }, {passive: true});
-    }
-    var subsWrap = el.querySelector('.block-subs');
-    if (subsWrap){
-      // Keep taps/clicks inside the list away from the block's swap & drag handlers
-      ['click','mousedown','touchstart','touchend','touchmove'].forEach(function(evt){
-        subsWrap.addEventListener(evt, function(e){ e.stopPropagation(); }, evt.indexOf('touch') === 0 ? {passive: evt === 'touchmove'} : false);
-      });
-      subsWrap.querySelectorAll('input[type=checkbox]').forEach(function(cb){
-        cb.addEventListener('change', function(e){
-          e.stopPropagation();
-          suppressScroll = true;
-          window.onSubCheck(parentTask.id, parseInt(cb.getAttribute('data-sub-id')), cb.checked);
-        });
-      });
-    }
+  var doneWrap = el.querySelector('.block-done');
+  if (doneWrap){
+    ['click','mousedown','touchstart','touchend','touchmove'].forEach(function(evt){
+      doneWrap.addEventListener(evt, function(e){ e.stopPropagation(); }, evt.indexOf('touch') === 0 ? {passive: evt === 'touchmove'} : false);
+    });
+    var dcb = doneWrap.querySelector('input');
+    if (dcb) dcb.addEventListener('change', function(e){
+      e.stopPropagation();
+      snapshotForUndo();
+      suppressScroll = true;
+      setItemDone(String(block.taskId), dcb.checked);
+      renderTasks();
+      rebuildSchedule();
+      saveState();
+    });
   }
 
   el.addEventListener('dragstart', function(e){
-    if (e.target && e.target.closest && e.target.closest('.block-subs')) { e.preventDefault(); return; }
+    if (e.target && e.target.closest && e.target.closest('.block-done')) { e.preventDefault(); return; }
     dragData = {dayIdx: dayIdx, taskId: block.taskId, session: block.session};
     setTimeout(function(){ el.classList.add('dragging'); }, 0);
   });
@@ -1695,6 +2005,7 @@ function performTapInsert(from, to){
   delete insertBlock.startMin; delete insertBlock.splitIdx; delete insertBlock.splitTotal;
   toDay.blocks.push(insertBlock);
 
+  syncPriorityFromSchedule();   // the new calendar order becomes the priority order
   rebuildSchedule();
   showInfo('"' + fromBlock.taskName + '" inserted before "' + toBlock.taskName + '".');
   saveState();
@@ -1786,6 +2097,8 @@ function collectState(){
     taskIdCounter: STATE.taskIdCounter,
     breakIdCounter: STATE.breakIdCounter,
     subtaskIdCounter: STATE.subtaskIdCounter,
+    priority: STATE.priority,
+    schemaV: 3,
     alertedTasks: STATE.alertedTasks,
     lastCheckedDate: STATE.lastCheckedDate,
     rolloverCount: STATE.rolloverCount,
@@ -1808,6 +2121,13 @@ function applyState(data){
     var maxSub = 0;
     STATE.tasks.forEach(function(t){ (t.subtasks || []).forEach(function(st){ if (st.id > maxSub) maxSub = st.id; }); });
     STATE.subtaskIdCounter = maxSub + 1;
+  }
+  STATE.priority = Array.isArray(data.priority) ? data.priority.slice() : [];
+  if (!(data.schemaV >= 3)){
+    // Pre-subtask-scheduling data: blocks were keyed by task id, so the schedule
+    // must be rebuilt around work items. Tasks, subtasks and durations are kept.
+    STATE.schedule = [];
+    STATE.completedTasks = {};
   }
   if (data.alertedTasks) STATE.alertedTasks = data.alertedTasks;
   if (data.lastCheckedDate) STATE.lastCheckedDate = data.lastCheckedDate;
@@ -2124,6 +2444,9 @@ function initEvents(){
   setInterval(liveRepack, 60000);
   updateClock();
   restorePanelStates();
+  var _p = loadUiPrefs();
+  if (_p.planTab) switchPlanTab(_p.planTab);
+  if (_p.mainView === 'board') switchMainView('board');
 }
 
 var autoSchedTimer = null, autoSchedHardReset = false;
