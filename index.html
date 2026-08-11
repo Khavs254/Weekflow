@@ -801,7 +801,7 @@ function movePriority(fromKey, beforeKey){
   if (ti === -1) arr.push(fromKey); else arr.splice(ti, 0, fromKey);
   STATE.priority = arr;
   priDrag = null;
-  rebuildSchedule();
+  generateSchedule(true);  // snapshot already taken above
   renderPriority();
   saveState();
 }
@@ -1256,7 +1256,7 @@ function repackDay(day, s){
   day.blocks = completed.concat(pastDue).concat(result.placed);
 }
 
-function generateSchedule(){
+function generateSchedule(skipSnapshot){
   var items = orderedWorkItems();
   if (!items.length) { showInfo('Add at least one task (or subtask) with a duration.', 'warn'); return; }
   var s = getSettings();
@@ -1265,7 +1265,7 @@ function generateSchedule(){
   STATE.alertedTasks = {};
   STATE.rolloverCount = 0;
   document.getElementById('rolloverBadge').style.display = 'none';
-  snapshotForUndo();
+  if (!skipSnapshot) snapshotForUndo();
 
   var taskQueue = items.map(function(it, idx){
     return {
@@ -1438,9 +1438,8 @@ function rebuildSchedule(){
   Object.keys(dayMap).sort().forEach(function(k){ allDays.push(dayMap[k]); });
   recomputeSessionLabels(allDays);
   STATE.schedule = allDays;
-  syncPriorityFromSchedule();   // dragging on the calendar re-prioritises
-  renderTasks();
-  renderCalendar();
+  syncPriorityFromSchedule();   // read the dragged order into STATE.priority
+  generateSchedule(true);       // full repack; snapshot already taken at drag start
   showInfo('Schedule updated.');
   saveState();
 }
@@ -1764,34 +1763,25 @@ function createBlock(block, dayIdx, isToday, isPast, currentMin, s){
     var dragTaskId = String(dragData.taskId);
     var targTaskId = String(el.dataset.taskId);
     if (dragTaskId === targTaskId) { dragData = null; return; }
-    var toDayIdx = parseInt(el.dataset.dayIdx);
-    var toDay = STATE.schedule[toDayIdx];
+    if (STATE.completedTasks[dragTaskId] || STATE.completedTasks[targTaskId]) { dragData = null; return; }
+
     snapshotForUndo();
-    var s2 = getSettings();
+    syncPriority();
+    var arr = STATE.priority.slice();
+    var fi = arr.indexOf(dragTaskId);
+    if (fi !== -1) arr.splice(fi, 1);
+    var ti = arr.indexOf(targTaskId);
+    if (ti === -1) arr.push(dragTaskId); else arr.splice(ti, 0, dragTaskId);
+    STATE.priority = arr;
 
-    var dragTotalMin = 0, dragBlockRef = null;
-    STATE.schedule.forEach(function(schedDay){
-      schedDay.blocks.forEach(function(bl){
-        if (String(bl.taskId) === dragTaskId && !bl.pastDue) { dragTotalMin += bl.durationMin; if (!dragBlockRef) dragBlockRef = bl; }
-      });
-    });
-    if (!dragBlockRef) { dragData = null; return; }
+    var dragName = dragTaskId, targName = targTaskId;
+    STATE.schedule.forEach(function(d){ d.blocks.forEach(function(b){
+      if (String(b.taskId) === dragTaskId) dragName = b.taskName;
+      if (String(b.taskId) === targTaskId) targName = b.taskName;
+    }); });
 
-    var targEarliest = 9999;
-    toDay.blocks.forEach(function(tb){ if (String(tb.taskId) === targTaskId && tb.startMin !== undefined && tb.startMin < targEarliest) targEarliest = tb.startMin; });
-    if (targEarliest === 9999) targEarliest = 480;
-
-    STATE.schedule.forEach(function(schedDay){
-      schedDay.blocks = schedDay.blocks.filter(function(b){ return String(b.taskId) !== dragTaskId || b.pastDue; });
-    });
-
-    var insertBlk = {}; for (var k2 in dragBlockRef) insertBlk[k2] = dragBlockRef[k2];
-    insertBlk.durationMin = dragTotalMin; insertBlk.order = targEarliest - 0.5;
-    delete insertBlk.startMin; delete insertBlk.splitIdx; delete insertBlk.splitTotal;
-    toDay.blocks.push(insertBlk);
-
-    rebuildSchedule();
-    showInfo('"' + dragBlockRef.taskName + '" inserted — schedule repacked.');
+    generateSchedule(true);
+    showInfo('"' + dragName + '" moved before "' + targName + '".');
     saveState();
     dragData = null;
   });
@@ -1946,6 +1936,7 @@ function restorePanelStates(){
 }
 window.togglePanel = togglePanel;
 
+
 function openDrawer(){
   document.getElementById('drawer').classList.add('open');
   document.getElementById('drawerOverlay').classList.add('open');
@@ -1965,51 +1956,41 @@ function clearSwapState(){
 }
 
 function performTapInsert(from, to){
-  var s = getSettings();
-  var fromDay = STATE.schedule[from.dayIdx];
-  var toDay = STATE.schedule[to.dayIdx];
-  if (!fromDay || !toDay) { clearSwapState(); return; }
-
-  var fromBlock = fromDay.blocks.find(function(b){ return String(b.taskId) === from.taskId; });
-  var toBlock = toDay.blocks.find(function(b){ return String(b.taskId) === to.taskId; });
+  // Search all days — dayIdx in swapState can be stale after a repack
+  var fromBlock = null, toBlock = null;
+  STATE.schedule.forEach(function(day){
+    day.blocks.forEach(function(b){
+      if (String(b.taskId) === from.taskId && !STATE.completedTasks[String(b.taskId)] && !b.pastDue) fromBlock = fromBlock || b;
+      if (String(b.taskId) === to.taskId   && !STATE.completedTasks[String(b.taskId)] && !b.pastDue) toBlock   = toBlock   || b;
+    });
+  });
   if (!fromBlock || !toBlock) { clearSwapState(); return; }
 
   var now = new Date(); var nowMin = now.getHours()*60 + now.getMinutes();
   if (STATE.completedTasks[String(fromBlock.taskId)]) { showSwapError('"' + fromBlock.taskName + '" is already completed.'); clearSwapState(); return; }
-  if (STATE.completedTasks[String(toBlock.taskId)]) { showSwapError('"' + toBlock.taskName + '" is completed - cannot insert before it.'); clearSwapState(); return; }
-  var todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  if (fromDay.date < todayStart || toDay.date < todayStart) { showSwapError("Can't move tasks in the past."); clearSwapState(); return; }
+  if (STATE.completedTasks[String(toBlock.taskId)])   { showSwapError('"' + toBlock.taskName + '" is completed — cannot insert before it.'); clearSwapState(); return; }
   if (from.taskId === to.taskId) { showSwapError('Select a different task to insert before.'); clearSwapState(); return; }
-  if (sameDay(fromDay.date, now) && fromBlock.startMin !== undefined && nowMin >= fromBlock.startMin && nowMin < fromBlock.startMin + fromBlock.durationMin){
+  if (sameDay(new Date(fromBlock.date || now), now) && fromBlock.startMin !== undefined && nowMin >= fromBlock.startMin && nowMin < fromBlock.startMin + fromBlock.durationMin){
     showSwapError('"' + fromBlock.taskName + '" is currently in progress.'); clearSwapState(); return;
   }
 
   snapshotForUndo();
-  var fromTaskId = from.taskId;
-  var fromTotalMin = 0;
-  STATE.schedule.forEach(function(schedDay){
-    schedDay.blocks.forEach(function(bl){ if (String(bl.taskId) === fromTaskId && !bl.pastDue) fromTotalMin += bl.durationMin; });
-  });
-  if (!fromTotalMin) fromTotalMin = Math.round(fromBlock.durationMin || 60);
+  syncPriority();
+  var fromKey = from.taskId;
+  var toKey   = to.taskId;
+  var arr = STATE.priority.slice();
+  var fi = arr.indexOf(fromKey);
+  if (fi !== -1) arr.splice(fi, 1);
+  var ti = arr.indexOf(toKey);
+  if (ti === -1) arr.push(fromKey); else arr.splice(ti, 0, fromKey);
+  STATE.priority = arr;
 
-  var toEarliest = 9999;
-  toDay.blocks.forEach(function(tb){ if (String(tb.taskId) === to.taskId && tb.startMin !== undefined && tb.startMin < toEarliest) toEarliest = tb.startMin; });
-  if (toEarliest === 9999) toEarliest = 480;
-
-  STATE.schedule.forEach(function(schedDay){
-    schedDay.blocks = schedDay.blocks.filter(function(b){ return String(b.taskId) !== fromTaskId || b.pastDue; });
-  });
-
-  var insertBlock = {}; for (var k in fromBlock) insertBlock[k] = fromBlock[k];
-  insertBlock.durationMin = fromTotalMin; insertBlock.order = toEarliest - 0.5;
-  delete insertBlock.startMin; delete insertBlock.splitIdx; delete insertBlock.splitTotal;
-  toDay.blocks.push(insertBlock);
-
-  syncPriorityFromSchedule();   // the new calendar order becomes the priority order
-  rebuildSchedule();
-  showInfo('"' + fromBlock.taskName + '" inserted before "' + toBlock.taskName + '".');
+  var fromName = fromBlock.taskName, toName = toBlock.taskName;
+  swapState = null; // clear BEFORE re-render so stale el reference can't misfire
+  var bar = document.getElementById('swapBar'); if (bar) bar.style.display = 'none';
+  generateSchedule(true);
+  showInfo('"' + fromName + '" moved before "' + toName + '".');
   saveState();
-  clearSwapState();
 }
 
 function switchTab(name){
