@@ -500,6 +500,7 @@ var dragData = null, swapState = null;
 var audioCtx = null;
 var blockSubsExpanded = {};  // taskId -> whether its subtask list is open on the calendar
 var suppressScroll = false;  // skip the auto scroll-to-today on in-place re-renders
+var _savedScrollLeft, _savedScrollTop;  // calendar position saved before suppress-renders
 
 var DAY_FULL = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 var MONTH = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -886,6 +887,7 @@ function updateTask(id, props){
   } else if (renamed) {
     // Rename doesn't change timing — just relabel the existing blocks in place
     propagateTaskName(id, t.name);
+    suppressScroll = true;
     renderCalendar();
   }
   saveState();
@@ -1327,6 +1329,7 @@ function generateSchedule(skipSnapshot){
 }
 
 function rebuildSchedule(){
+  suppressScroll = true;  // never jump to today on an incremental rebuild
   var s = getSettings();
   var now = new Date();
   var items = orderedWorkItems();
@@ -1674,13 +1677,25 @@ function renderCalendar(){
     col.appendChild(slotsDiv); wrap.appendChild(col);
   });
 
+  var _scrollEl = document.getElementById('scheduleScroll');
+  if (suppressScroll && _scrollEl && _savedScrollLeft === undefined) {
+    _savedScrollLeft = _scrollEl.scrollLeft;
+    _savedScrollTop  = _scrollEl.scrollTop;
+  }
   var body = document.getElementById('calendarBody');
   body.innerHTML = ''; body.appendChild(wrap);
   document.getElementById('slotsInfo').textContent = totalBlocks + ' sessions';
   document.getElementById('spanInfo').textContent = 'across ' + days.length + ' day' + (days.length === 1 ? '' : 's');
   checkAlerts();
-  if (suppressScroll) { suppressScroll = false; }
-  else setTimeout(function(){ var tc = document.querySelector('.day-col.today'); if (tc) tc.scrollIntoView({behavior: 'smooth', block: 'nearest', inline: 'start'}); }, 60);
+  if (suppressScroll) {
+    suppressScroll = false;
+    // Restore calendar scroll position so typing doesn't jump
+    var _cs = document.getElementById('scheduleScroll');
+    if (_cs && _savedScrollLeft !== undefined) { _cs.scrollLeft = _savedScrollLeft; _cs.scrollTop = _savedScrollTop || 0; }
+    _savedScrollLeft = undefined; _savedScrollTop = undefined;
+  } else {
+    setTimeout(function(){ var tc = document.querySelector('.day-col.today'); if (tc) tc.scrollIntoView({behavior: 'smooth', block: 'nearest', inline: 'start'}); }, 60);
+  }
 }
 
 function createBlock(block, dayIdx, isToday, isPast, currentMin, s){
